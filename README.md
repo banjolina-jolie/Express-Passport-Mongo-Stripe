@@ -4,4 +4,4 @@
 ### Quick Setup
 
 - npm install
-- node --harmony okp/server.js
+- node --harmony app/server.js

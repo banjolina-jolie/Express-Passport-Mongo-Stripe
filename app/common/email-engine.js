@@ -18,7 +18,6 @@ util.inherits(EmailEngine, events.EventEmitter);
 
 EmailEngine.prototype.init = function() {
   let self = this;
-
   self.sendgrid_ = new SendGrid(config.SENDGRID_USER, config.SENDGRID_KEY);
 };
 

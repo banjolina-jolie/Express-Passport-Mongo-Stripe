@@ -291,7 +291,7 @@ Transactor.createAppropriateStripeAccount = function(_user){
     return {description : "OKPitch user " + _user.username,
             email: _user.email,
             metadata : {profession: _user.meta.profession,
-                        okpId : _user._id.toString(),
+                        userId : _user._id.toString(),
                         created : Date.create().format('{yyyy}-{MM}-{dd}--{HH}:{mm}')}};
   }
   // => transactorTypes.receiver || user.listener

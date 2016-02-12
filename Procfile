@@ -1,1 +1,1 @@
-web: node --harmony okp/server.js
+web: node --harmony app/server.js

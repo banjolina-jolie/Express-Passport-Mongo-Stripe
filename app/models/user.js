@@ -241,7 +241,7 @@ User.saveProfileImage = function(userId, image, done){
   Seq()
     .seq(function(){
       let that = this;
-      storage = new Storage("okprecious");
+      storage = new Storage("appBucket");
       storage.on("error", function(err){
         that(err);
       });

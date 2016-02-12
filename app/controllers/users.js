@@ -16,8 +16,9 @@ function registerUser(req, res) {
            req.socket.remoteAddress ||
            req.connection.socket.remoteAddress;
 
-  if(ip.split(',').length > 1)
+  if (ip.split(',').length > 1) {
     ip = ip.split(',').first();
+  }
 
   logger.info("Register user has ip " + ip);
 
@@ -40,8 +41,7 @@ function registerUser(req, res) {
     .catch(function(err){
       res.status(500).json({error : err});
       logger.error("registerUser error " + err);
-    })
-  ;
+    });
 }
 
 // An explicit get to /users/:username should return user

@@ -12,7 +12,7 @@ if(env.NODE_ENV !== "production"){
 }
 
 config.MONGODB_URL = env.MONGOLAB_URI;
-config.MONGODB_DATABASE = env === "test" ? "okpTest" : env.MONGODB_DATABASE;
+config.MONGODB_DATABASE = env.MONGODB_DATABASE;
 config.MONGODB_USERNAME = env.MONGODB_USERNAME;
 config.MONGODB_PASSWORD = env.MONGO_PASSWORD;
 config.STRIPE_SECRETKEY = env.STRIPE_SECRETKEY;
@@ -23,5 +23,4 @@ config.AWS_ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;
 config.AWS_SECRET_KEY = env.AWS_SECRET_KEY;
 config.AWS_REGION = env.AWS_REGION;
 config.API_PORT = env.PORT;
-config.API_URL = env.API_SERVER;
 config.FE_URL = env.FE_URL;
