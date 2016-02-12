@@ -51,7 +51,7 @@ function format() {
 }
 
 
-var Logger = function(filename) {
+var Logger = function (filename) {
   var id = os.hostname()  + '::' + process.pid;
 
   this.prefix_ = id + ':' + filename + ':';
@@ -70,22 +70,22 @@ Logger.prototype.debug = function () {
   this.logger_.debug(this.prefix_ + lineNumber() + ':' + functionName() + ': ' + string);
 };
 
-Logger.prototype.info = function() {
+Logger.prototype.info = function () {
   if (WEBSITE_DEBUG_LEVEL > levels['info']) return;
   var string = format.apply(null, arguments);
   this.logger_.info(this.prefix_ + ':' + string);
 };
 
-Logger.prototype.log = function() {
+Logger.prototype.log = function () {
   this.info.apply(this, arguments);
 };
 
-Logger.prototype.warn = function() {
+Logger.prototype.warn = function () {
   var string = format.apply(null, arguments);
   this.logger_.warn(this.prefix_ + lineNumber() + ': ' + string);
 };
 
-Logger.prototype.error = function() {
+Logger.prototype.error = function () {
   var args = Array.prototype.slice.call(arguments, 0);
   var string = format.apply(null, arguments);
   var errorString = this.prefix_ + lineNumber() + ': ' +  string;
@@ -102,15 +102,15 @@ Logger.prototype.error = function() {
 };
 
 
-exports.forFile = function(filename) {
+exports.forFile = function (filename) {
   return new Logger(filename);
 };
 
-exports.init = function() {
+exports.init = function () {
   logger.add(winston.transports.Console, { level: WEBSITE_DEBUG, colorize: true, timestamp: true });
 };
 
-exports.initServer = function() {
+exports.initServer = function () {
   logger.add(winston.transports.Console, { level: WEBSITE_DEBUG, colorize: true, timestamp: true });
   logger.add(winston.transports.Papertrail, { level: 'info',  host: 'logs3.papertrailapp.com', port: 50419 });
 };

@@ -28,7 +28,7 @@ module.exports = function setupApp(theSession) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  app.use(function(err, req, res, next) {
+  app.use(function (err, req, res, next) {
     if (err) {
       logger.error(err.stack ? err.stack : new Error('error').stack);
     }

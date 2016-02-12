@@ -26,12 +26,12 @@ let Database = module.exports;
 /**
  * Connect to the database.
  *
- * @param {function(err, database)} callback  The callback to consume the database.
+ * @param {function (err, database)} callback  The callback to consume the database.
  * @return {undefined}
  */
-Database.connect = function(callback) {
+Database.connect = function (callback) {
 
-  callback = callback ? callback : function() {};
+  callback = callback ? callback : function () {};
 
   if (!DATABASE && CONNECTING) {
     return WAITING.push([Database.connect, Object.values(arguments)]);
@@ -49,7 +49,7 @@ Database.connect = function(callback) {
     logger.info('Connecting to database at ' + dbTarget);
     mongodb.MongoClient.connect(dbTarget,
                                 {},
-                                function(err, db) {
+                                function (err, db) {
       if (err && RETRIES < MAX_RETRIES) {
         RETRIES += 1;
         logger.warn('Unable to connect to database: %s. Retrying %s out of %s times',
@@ -59,12 +59,12 @@ Database.connect = function(callback) {
       }
       DATABASE = db;
       callback(err, DATABASE);
-      db.on('error', function(err) {
+      db.on('error', function (err) {
         throw err;
       });
 
       if (WAITING.length) {
-        WAITING.forEach(function(call) {
+        WAITING.forEach(function (call) {
           call[0].apply(null, call[1]);
         });
       }
@@ -77,26 +77,26 @@ Database.connect = function(callback) {
  * Connect to database and ensure collection exists
  *
  * @param {string}  collectionName   The name of the collection.
- * @param {function(err, database, collection)}   callback  The callback to consume the database and collection
+ * @param {function (err, database, collection)}   callback  The callback to consume the database and collection
  * @return {undefined}
  */
- Database.connectAndEnsureCollection = function(collectionName, callback) {
-  callback = callback ? callback : function() {};
+ Database.connectAndEnsureCollection = function (collectionName, callback) {
+  callback = callback ? callback : function () {};
 
   Seq()
-    .seq('Get database', function() {
+    .seq('Get database', function () {
       Database.connect(this);
     })
-    .seq('Ensure collection', function(db) {
+    .seq('Ensure collection', function (db) {
       var that = this;
-      db.createCollection(collectionName, function(err) {
+      db.createCollection(collectionName, function (err) {
         that(err, db);
       });
     })
-    .seq('done', function(db) {
+    .seq('done', function (db) {
       callback(null, db, db.collection(collectionName));
     })
-    .catch(function(err) {
+    .catch(function (err) {
       callback(err);
     })
     ;

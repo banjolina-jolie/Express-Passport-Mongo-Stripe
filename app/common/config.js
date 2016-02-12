@@ -5,7 +5,7 @@ let env = process.env;
 
 config.SESSION_SECRET = "ShesaysthathesaysthattheysaythatYOUsaythatonesaysthatweallsaysaywhat?";
 
-if(env.NODE_ENV !== "production"){
+if (env.NODE_ENV !== "production") {
 	// Automatically load .env file that should be found at the root of the project dir.
 	// Safely and easily swap between running in production, dev and test mode.
 	require('dotenv').load();

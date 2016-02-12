@@ -30,8 +30,9 @@ function populateVisibleUser(_user, res, done) {
       callback();
     }],
     function (err) {
-      if(err)
+      if (err) {
         return res.status(500).send({error: err});
+      }
       done();
     });
 }
@@ -40,12 +41,12 @@ function login(req, res, next) {
   logger.info('login', req.body.email);
   var user;
   passport.authenticate('local', function (err, _user, info) {
-    if(err) {
+    if (err) {
       res.cookie("currentUser", constants.userStates.ERRORED);
       return next(err);
     }
 
-    if(!_user) {
+    if (!_user) {
       res.cookie("currentUser", constants.userStates.ERRORED);
       return res.status(401).send({ error: info.message, success: false });
     }
@@ -81,22 +82,19 @@ function checkAuthenticated(req, res, next) {
       User.findById(req.user._id, callback);
     },
     function (_user, callback) {
-      if(!_user) {
+      if (!_user) {
         res.cookie("currentUser", constants.userStates.LOGGEDOUT);
         return res.status(200).send({});
       }
 
       _user._id = req.user._id;
 
-      // If we are super just return with that user.
-      if(_user.type === constants.userTypes.SUPER)
-        return res.status(200).json(projectCurrentUser(_user));
-
       populateVisibleUser(_user, res, callback);
     }],
     function (err) {
-      if(!err)
+      if (!err) {
         return next();
+      }
       res.cookie("currentUser", constants.userStates.LOGGEDOUT);
       return res.status(500).send({error: err});
     });
@@ -105,31 +103,35 @@ function checkAuthenticated(req, res, next) {
 function validator(req, res) {
   var token = req.body.token;
   User.findByToken(token, function (err, user) {
-    if(err)
+    if (err) {
       return res.status(500).json({message: err});
+    }
 
-    if(!user)
+    if (!user) {
       return res.status(404).json({message: "Unable to find user"});
+    }
 
     // Token already authenticated (not a bother but good idea to inform the frontend of the exact state)
-    if(user.state === constants.userStates.ACTIVE || user.state === constants.userStates.NEEDSREVIEW)
+    if (user.state === constants.userStates.ACTIVE || user.state === constants.userStates.NEEDSREVIEW) {
       return res.status(204).json(projectCurrentUser(user));
+    }
 
     // Expired
-    if(user.validation.createdAt < Date.create('7 days ago').getTime())
+    if (user.validation.createdAt < Date.create('7 days ago').getTime()) {
       return res.status(498).json({message : "this token has expired"});
+    }
 
     User.verifyEmail(user._id, function (err) {
-      if(err) {
+      if (err) {
         return res.status(500).json({message: "Unable to verify that token"});
       }
       passport.authenticate('local', function (err, _user, info) {
-        if(err) {
+        if (err) {
           res.cookie("currentUser", constants.userStates.ERRORED);
           return next(err);
         }
 
-        if(!_user) {
+        if (!_user) {
           res.cookie("currentUser", constants.userStates.ERRORED);
           return res.status(401).send({ error: info.message, success: false });
         }
@@ -174,14 +176,16 @@ function authenticate(email, password, done) {
 
   loadUser(email, function (err, user) {
     var message = { message: 'Incorrect email or password.'};
-    if (err || !user)
+    if (err || !user) {
       return done(err, false, message);
+    }
 
     bcrypt.compare(password, user.hash, function (err, matches) {
       if (err) logger.warn(err);
 
-      if (!matches)
+      if (!matches) {
         return done(null, false, { message: 'Incorrect email or password.' });
+      }
 
       done(null, projectCurrentUser(user));
     });
@@ -196,8 +200,9 @@ function deserializeUser(id, done) {
   id = JSON.parse(id);
   var email = id.email;
 
-  if(userCache[id.email] && userCache[id.email].created > (Date.now() - 600000))
+  if (userCache[id.email] && userCache[id.email].created > (Date.now() - 600000)) {
     return done(null, projectCurrentUser(userCache[id.email].user));
+  }
 
   User.findByEmail(email, function (err, user) {
     if (err) return done(err);
@@ -215,7 +220,7 @@ function deserializeUser(id, done) {
 function sendSupportEmail(req, res) {
   let emailManager = new EmailSender();
   emailManager.sendSupportEmail(req.body, function (err) {
-    if(err) {
+    if (err) {
       logger.warn("Unable to send support email. " + err + " \n user : " + user.email);
     }
     res.send({});

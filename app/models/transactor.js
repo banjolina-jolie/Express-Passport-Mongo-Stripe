@@ -67,7 +67,7 @@ DEBIT_CARD
 
 var members = ["userId"];
 
-module.exports = function() {
+module.exports = function () {
   this.constructor.super_.call(this, "transactors", members);
 };
 
@@ -75,7 +75,7 @@ let Transactor = module.exports;
 
 util.inherits(Transactor, Model);
 
-Transactor.prototype.validate = function(entity, done) {
+Transactor.prototype.validate = function (entity, done) {
   done(null, {result : true});
 };
 
@@ -85,7 +85,7 @@ Transactor.updatePush = Model.updatePush.bind(Transactor);
 Static helpers and entry points
 **/
 
-members.each(function(member){
+members.each(function (member) {
   Transactor["findBy" + Model.capitalize(member)] = Model.baseFinder.bind(Transactor, member);
 });
 
@@ -93,7 +93,7 @@ Transactor.findById = Model.findById.bind(Transactor); // id, done);
 Transactor.delete = Model.delete.bind(Transactor); // id, done);
 Transactor.find = Model.find.bind(Transactor); // params, done);
 
-Transactor.refresh = function(transactor, done){
+Transactor.refresh = function (transactor, done) {
   async.waterfall([
     (callback) => {
       stripeManager.retrieve(transactor, callback);
@@ -101,21 +101,21 @@ Transactor.refresh = function(transactor, done){
     (stripeDetails, callback) => {
       callback(null, Transactor.populate(transactor, stripeDetails));
     }],
-    function(err, populated){
-      if(err){
+    function (err, populated) {
+      if (err) {
         console.log("stripe retrieve error " + err);
       }
       done(err, populated);
     });
 };
 
-Transactor.populate = function(transactor, stripeInfo){
+Transactor.populate = function (transactor, stripeInfo) {
   transactor.visible.paymentMethods = [];
-  if(transactor.type === transactorTypes.RECEIVER){
-    if(stripeInfo.external_accounts.total_count === 0)
+  if (transactor.type === transactorTypes.RECEIVER) {
+    if (stripeInfo.external_accounts.total_count === 0)
       return transactor;
     stripeInfo.external_accounts.data.each((pm) => {
-      if(pm.object === "bank_account"){
+      if (pm.object === "bank_account") {
         transactor.visible.paymentMethods.push(projectBankAccount(pm));
       }
       else{ // it has to be a card of some type
@@ -127,21 +127,23 @@ Transactor.populate = function(transactor, stripeInfo){
                                        transfersEnabled : stripeInfo.transers_enabled,
                                        required : stripeInfo.verification};
   }
-  else{ // and the rep.
-    if(stripeInfo.sources.total_count === 0)
+  else{ // and the user.
+    if (stripeInfo.sources.total_count === 0) {
       return transactor;
-    if(stripeInfo.sources.total_count > 1)
-      logger.error("This rep has two forms of payment " + transactor._id.toString());
+    }
+    if (stripeInfo.sources.total_count > 1) {
+      logger.error("This user has two forms of payment " + transactor._id.toString());
+    }
     transactor.visible.paymentMethods.push(projectCard(stripeInfo.sources.data.first()));
     transactor.visible.verification = {active : !stripeInfo.delinquent};
   }
   return transactor;
 };
 
-Transactor.addPaymentMethod = function(user, transactor, payload, done){
+Transactor.addPaymentMethod = function (user, transactor, payload, done) {
   let incomingType = parseInt(payload.type);
 
-  if(incomingType === paymentMethods.CARD){
+  if (incomingType === paymentMethods.CARD) {
 
     let newCard = {object : "card",
                    name : user.name + " " + user.last_name,
@@ -160,16 +162,16 @@ Transactor.addPaymentMethod = function(user, transactor, payload, done){
 
     //console.log("newCard looks like " + JSON.stringify(newCard));
     //console.log("card incoming looks like " + JSON.stringify(payload.details));
-    // Have to assume that it is a rep.
+    // Have to assume that it is a user.
     stripeManager.addCardToPresenter(transactor.ss.stripeId, newCard, done);
   }
-  else if(incomingType === paymentMethods.BANK_ACCOUNT ||
-          incomingType === paymentMethods.PAYPAL){
+  else if (incomingType === paymentMethods.BANK_ACCOUNT ||
+          incomingType === paymentMethods.PAYPAL) {
     // have to assume that it is a listener
     //console.log("BA incoming looks like " + JSON.stringify(payload.details));
-    stripeManager.addBankAccount(transactor, payload.details, function(err, _response){
+    stripeManager.addBankAccount(transactor, payload.details, function (err, _response) {
       //console.log("add bank account response " + JSON.stringify(_response) + " err : " + err);
-      if(err)
+      if (err)
         return done(err);
       done(null, _response.bank_accounts.data);
     });
@@ -177,36 +179,36 @@ Transactor.addPaymentMethod = function(user, transactor, payload, done){
 };
 
 /// Used exclusively in add payment details
-Transactor.updatePaymentDetails = function(user, payload, done){
+Transactor.updatePaymentDetails = function (user, payload, done) {
   let transactor;
 
   async.waterfall([
-    function(callback){
+    function (callback) {
       Transactor.findByUserAndType({userId: user._id.toString(), type: user.type}, callback);
     },
-    function(_transactor, callback){
+    function (_transactor, callback) {
       transactor = _transactor;
-      if(transactor.type === transactorTypes.RECEIVER)
+      if (transactor.type === transactorTypes.RECEIVER)
         return callback();
-      Transactor.replaceCustomer(user, transactor, (err, updatedTransactor) => {
-        if(err)
+      Transactor.userlaceCustomer(user, transactor, (err, updatedTransactor) => {
+        if (err)
           return callback(err);
         transactor = updatedTransactor;
         callback();
       });
     },
-    function(callback){
+    function (callback) {
       Transactor.addPaymentMethod(user, transactor, payload, callback);
     },
-    function(stripeUpdate, callback){
+    function (stripeUpdate, callback) {
       Transactor.refresh(transactor, callback);
     },
-    function(updatedTransactor, callback){
+    function (updatedTransactor, callback) {
       let response = {validation : {success : true}, transactor : updatedTransactor};
       callback(null, response);
     }],
-    function(err, result){
-      if(err){
+    function (err, result) {
+      if (err) {
         logger.warn("Error adding payment Method to transactor " + err);
         let response = {validation : {success: false, message: err.message || err}};
         return done(null, response);
@@ -216,7 +218,7 @@ Transactor.updatePaymentDetails = function(user, payload, done){
     });
 };
 
-Transactor.replaceCustomer = function(user, transactor, done){
+Transactor.userlaceCustomer = function (user, transactor, done) {
   async.waterfall([
     (cb) => {
       stripeManager.deleteCustomer(transactor, cb);
@@ -233,17 +235,17 @@ Transactor.replaceCustomer = function(user, transactor, done){
                           cb);
     }],
     (err, _transactor) => {
-      if(err)
+      if (err)
         return done(err);
       done(null, _transactor);
     });
 };
 
-Transactor.create = function(user, ip, done){
+Transactor.create = function (user, ip, done) {
   let entry = Transactor.createEntry(user);
   let stripeResponse;
 
-  if(!user)
+  if (!user)
     return done("Transactor::Create - What no user ?");
 
   async.waterfall([
@@ -259,7 +261,7 @@ Transactor.create = function(user, ip, done){
                     metadata : {"created" : Date.create().format('{yyyy}-{MM}-{dd}--{HH}:{mm}')}};
 
       Object.merge(entry, update);
-      if(entry.type !== transactorTypes.RECEIVER)
+      if (entry.type !== transactorTypes.RECEIVER)
         return callback();
       // otherwise it's a managed account
       entry.ss.keys = stripeResponse.keys;
@@ -270,14 +272,14 @@ Transactor.create = function(user, ip, done){
     (callback) => {
       Model.create.call(Transactor, entry, callback);
     }],
-    function(err){
-      if(err)
+    function (err) {
+      if (err)
         return done(err);
       done(null, Transactor.populate(entry, stripeResponse));
     });
 };
 
-Transactor.createEntry = function(user){
+Transactor.createEntry = function (user) {
   return {userId : user._id.toString(),
           type : user.type,
           logs : [],
@@ -286,9 +288,9 @@ Transactor.createEntry = function(user){
           visible : {}};
 };
 
-Transactor.createAppropriateStripeAccount = function(_user){
-  if(_user.type === transactorTypes.CUSTOMER){
-    return {description : "OKPitch user " + _user.username,
+Transactor.createAppropriateStripeAccount = function (_user) {
+  if (_user.type === transactorTypes.CUSTOMER) {
+    return {description : "AppName user " + _user.username,
             email: _user.email,
             metadata : {profession: _user.meta.profession,
                         userId : _user._id.toString(),
@@ -305,13 +307,13 @@ Transactor.createAppropriateStripeAccount = function(_user){
                           type : "individual"}};
 };
 
-Transactor.findByUserAndType = function(params, done){
+Transactor.findByUserAndType = function (params, done) {
   async.waterfall([
-    function(callback){
+    function (callback) {
       Transactor.find(params, callback);
     },
     (transactors, callback) => {
-      if(transactors.length !== 1)
+      if (transactors.length !== 1)
         return done(new Error("we should only have one Transactor per user " + JSON.stringify(transactors)));
       Transactor.refresh(transactors.first(), callback);
     }],
@@ -320,17 +322,17 @@ Transactor.findByUserAndType = function(params, done){
     });
 };
 
-Transactor.deleteByUser = function(userid, done){
+Transactor.deleteByUser = function (userid, done) {
   let transactor;
   async.waterfall([
-    function(callback){
+    function (callback) {
       Transactor.find({userId: userid}, callback);
     },
-    function(transactors, callback){
-      if(transactors.length !== 1)
+    function (transactors, callback) {
+      if (transactors.length !== 1)
         return done(new Error("we should only have one Transactor per user " + JSON.stringify(transactors)));
       transactor = transactors.first();
-      if(transactor.type === transactorTypes.RECEIVER){
+      if (transactor.type === transactorTypes.RECEIVER) {
         logger.warn("unable to delete the managed account yet, transactorId " + transactor._id.toString());
         callback();
       }
@@ -338,7 +340,7 @@ Transactor.deleteByUser = function(userid, done){
         stripeManager.deleteCustomer(transactor, callback);
       }
     },
-    function(callback){
+    function (callback) {
       Model.updatePush.call(Transactor,
                             transactor._id,
                             "logs",
@@ -346,15 +348,15 @@ Transactor.deleteByUser = function(userid, done){
                              message : "transactor orphaned due to user account deletion"},
                             callback);
     },
-    function(response, callback){
+    function (response, callback) {
       Model.updateSet.call(Transactor,
                           "state",
                           Transactor.States.ORPHANED,
                           transactor._id,
                           callback);
     }],
-    function(err, response){
-      if(err){
+    function (err, response) {
+      if (err) {
         console.log("Error deleting transactor " + err);
         return done(err);
       }
@@ -362,28 +364,6 @@ Transactor.deleteByUser = function(userid, done){
     });
 };
 
-
-Transactor.settleMeeting = function(meeting, done){
-  let reciever;
-  let customer;
-  async.waterfall([
-    (cb) => {
-      Transactor.findByUserAndType({userId : meeting.listener.id, type : userTypes.LISTENER}, cb);
-    },
-    (_listener, cb) => {
-      reciever = _listener;
-      Transactor.findByUserAndType({userId : meeting.presenter.id, type : userTypes.PRESENTER}, cb);
-    },
-    (_customer, cb) => {
-      customer = _customer;
-      // DOUBLE CHECK that you are getting the payment methods back via populate already, I think you are.
-      // CREATE CHARGE;
-    },
-    ],
-    (err, result) => {
-      done(err, result);
-    });
-};
 
 /**
  * Retrieves array of transactions performed for user acount
@@ -394,13 +374,13 @@ Transactor.settleMeeting = function(meeting, done){
  * @param  {String}   userId
  * @param  {Function} done
  */
-Transactor.getTransactionsByUser = function(userId, done) {
+Transactor.getTransactionsByUser = function (userId, done) {
   async.waterfall([
     (cb) => {
       Transactor.find({
         userId : userId
       }, (error, result) => {
-        if(error) {
+        if (error) {
           return cb(error);
         }
 
@@ -411,7 +391,7 @@ Transactor.getTransactionsByUser = function(userId, done) {
   ], done);
 };
 
-Transactor.markPaymentAsFailed = function(userId, meetingId, error, done) {
+Transactor.markPaymentAsFailed = function (userId, meetingId, error, done) {
   Transactor.updatePush(userId.toString(), 'logs', {
     timestamp : Date.now(),
     message : 'Failed to charge presenter for ' + meetingId + ' because of ' +
@@ -419,14 +399,14 @@ Transactor.markPaymentAsFailed = function(userId, meetingId, error, done) {
   }, done);
 };
 
-Transactor.markPaymentAsSent = function(userId, meetingId, done) {
+Transactor.markPaymentAsSent = function (userId, meetingId, done) {
   Transactor.updatePush(userId.toString(), 'logs', {
     timestamp : Date.now(),
     message : 'Presenter charged for ' + meetingId
   }, done);
 };
 
-Transactor.markPaymentAsReceived = function(userId, meetingId, done) {
+Transactor.markPaymentAsReceived = function (userId, meetingId, done) {
   Transactor.updatePush(userId.toString(), 'logs', {
     timestamp : Date.now(),
     message : 'Listener received money for ' + meetingId

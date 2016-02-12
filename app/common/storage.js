@@ -8,7 +8,7 @@ let util = require('util');
 let fs = require('fs');
 let zlib = require('zlib');
 
-let Storage = module.exports = function(bucketName){
+let Storage = module.exports = function (bucketName) {
   this.name_ = null;
   this.s3_ = null;
   this.init(bucketName);
@@ -16,14 +16,14 @@ let Storage = module.exports = function(bucketName){
 
 util.inherits(Storage, events.EventEmitter);
 
-Storage.prototype.init = function(name) {
+Storage.prototype.init = function (name) {
   var self = this;
 
   self.name_ = name;
   console.log("new Storage instance : " + self.name_);
 
   Seq()
-    .seq(function(){
+    .seq(function () {
       AWS.config.update({
         accessKeyId: config.AWS_ACCESS_KEY_ID,
         secretAccessKey: config.AWS_SECRET_KEY,
@@ -31,18 +31,18 @@ Storage.prototype.init = function(name) {
       });
       this();
     })
-    .seq(function(){
+    .seq(function () {
       self.s3_ = new AWS.S3();
       self.emit('ready');
     })
-    .catch(function(err){
+    .catch(function (err) {
       self.emit("error", err);
       console.log("Storage init err " + err);
     })
     ;
 };
 
-Storage.prototype.uploadStaticAsset = function(key, assetPath, done){
+Storage.prototype.uploadStaticAsset = function (key, assetPath, done) {
   let self = this;
   let params = {Bucket : self.name_,
                 Key : key,
@@ -56,18 +56,20 @@ Storage.prototype.uploadStaticAsset = function(key, assetPath, done){
           });
 };
 
-Storage.prototype.deleteObject = function(key, done){
+Storage.prototype.deleteObject = function (key, done) {
   let self = this;
-  let params = {Bucket: self.name_,
-                Key: key};
-  self.s3_.deleteObject(params, function(err, result){
+  let params = {
+    Bucket: self.name_,
+    Key: key
+  };
+  self.s3_.deleteObject(params, function (err, result) {
     done(err);
   });
 };
 
 // TODO
 // remove public flag post dev
-Storage.prototype.put = function(key, payload, done){
+Storage.prototype.put = function (key, payload, done) {
   let self = this;
   let buf = new Buffer(payload.replace(/^data:image\/\w+;base64,/, ""),'base64');
   let data = {Key: key,
@@ -76,8 +78,8 @@ Storage.prototype.put = function(key, payload, done){
               Bucket: self.name_,
               ContentType: 'image/jpeg',
               ACL:'public-read'};
-  self.s3_.putObject(data, function(err, data){
-    if(err){
+  self.s3_.putObject(data, function (err, data) {
+    if (err) {
       console.log(util.format('%s : %s, err : %s' , 'Error uploading data: ', data, err));
       done(err);
     }

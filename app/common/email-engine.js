@@ -9,34 +9,34 @@ let _ = require('lodash');
 
 let SendGrid = require('sendgrid');
 
-let EmailEngine = module.exports = function() {
+let EmailEngine = module.exports = function () {
   this.sendgrid_ = null;
   this.init();
 };
 
 util.inherits(EmailEngine, events.EventEmitter);
 
-EmailEngine.prototype.init = function() {
+EmailEngine.prototype.init = function () {
   let self = this;
   self.sendgrid_ = new SendGrid(config.SENDGRID_USER, config.SENDGRID_KEY);
 };
 
-EmailEngine.prototype.sendValidationEmail = function(user, done) {
+EmailEngine.prototype.sendValidationEmail = function (user, done) {
   let self = this;
-  let subject = 'Thanks for signing up with OKPitch! Complete your registration here.';
+  let subject = 'Thanks for signing up with AppName! Complete your registration here.';
   let message = util.format('Please go to %s/validator?token=%s to validate your email.', config.FE_URL, user.validation.token);
 
   let email = new self.sendgrid_.Email();
 
   email.addTo(user.email);
-  email.setFrom('accounts@okpitch.com');
+  email.setFrom('accounts@app_name.com');
   email.setSubject(subject);
   email.setText(message);
   email.addHeader('X-Sent-Using', 'SendGrid-API');
   email.addHeader('X-Transport', 'web');
   self.sendgrid_.send(email,
-                      function(err, msg) {
-                        if (err){
+                      function (err, msg) {
+                        if (err) {
                           logger.warn('Didn\'t get a valid response from the SendGrid servers ' + err + '\nto : ' + user.email);
                           done(err);
                         }
@@ -48,15 +48,15 @@ EmailEngine.prototype.sendValidationEmail = function(user, done) {
 
   // email Dylan when a new user signs up
   let internalNotif = new self.sendgrid_.Email();
-  internalNotif.addTo('dylan@okpitch.com');
-  internalNotif.setFrom('signups@okpitch.com');
+  internalNotif.addTo('dylan@app_name.com');
+  internalNotif.setFrom('signups@app_name.com');
   internalNotif.setSubject('New User Signup');
   internalNotif.setText(user.name + ' ' + user.last_name + ' ' + user.email + ' ' + user.meta.jobTitle + ' ' + user.meta.employer);
   internalNotif.addHeader('X-Sent-Using', 'SendGrid-API');
   internalNotif.addHeader('X-Transport', 'web');
   self.sendgrid_.send(internalNotif,
-                      function(err, msg) {
-                        if (err){
+                      function (err, msg) {
+                        if (err) {
                           logger.warn('Didn\'t get a valid response from the SendGrid servers ' + err + '\nto : internal notif email');
                         }
                         else
@@ -64,23 +64,23 @@ EmailEngine.prototype.sendValidationEmail = function(user, done) {
                       });
 };
 
-EmailEngine.prototype.sendSupportEmail = function(body, done) {
+EmailEngine.prototype.sendSupportEmail = function (body, done) {
   let self = this;
   let subject = 'Support Email';
   let message = util.format('%s %s %s', body.name, body.email, body.content);
 
   let email = new self.sendgrid_.Email();
 
-  email.addTo('dylan@okpitch.com');
-  email.setFrom('contactUs@okpitch.com');
+  email.addTo('dylan@app_name.com');
+  email.setFrom('contactUs@app_name.com');
   email.setSubject(subject);
   email.setText(message);
   email.addHeader('X-Sent-Using', 'SendGrid-API');
   email.addHeader('X-Transport', 'web');
   self.sendgrid_.send(email,
-                      function(err, msg) {
-                        if (err){
-                          logger.warn('Didn\'t get a valid response from the SendGrid servers ' + err + '\nto : dylan@okpitch.com');
+                      function (err, msg) {
+                        if (err) {
+                          logger.warn('Didn\'t get a valid response from the SendGrid servers ' + err + '\nto : dylan@app_name.com');
                           done(err);
                         }
                         else
@@ -94,15 +94,15 @@ function sendInviteEmail(content, address, done) {
   let email = new self.sendgrid_.Email();
 
   email.addTo(address);
-  email.setFrom('notifications@okpitch.com');
-  email.setFromName('OKPitch');
+  email.setFrom('notifications@app_name.com');
+  email.setFromName('AppName');
   email.setSubject(content.subject);
   email.setHtml(content.template);
   email.addHeader('X-Sent-Using', 'SendGrid-API');
   email.addHeader('X-Transport', 'web');
   self.sendgrid_.send(email,
-                      function(err, msg) {
-                        if (err){
+                      function (err, msg) {
+                        if (err) {
                           logger.warn('Didn\'t get a valid response from the SendGrid servers ' + err + '\nto : ' + address);
                           done(err);
                         }
@@ -119,9 +119,9 @@ function buildInviteEmailContent(template, mtg, listenerExists) {
   let subject;
 
   if (Number(mtg.rate)) {
-    subject = presenterName + ' from ' + employer + ' would like to meet with you on OKPitch. Earn $' + budget + ' for attending the meeting!';
+    subject = presenterName + ' from ' + employer + ' would like to meet with you on AppName. Earn $' + budget + ' for attending the meeting!';
   } else {
-    subject = presenterName + ' from ' + employer + ' would like to meet with you on OKPitch';
+    subject = presenterName + ' from ' + employer + ' would like to meet with you on AppName';
   }
   
   template = util.format(template, mtg.messages[0].text, config.FE_URL, mtg._id, mtg.listener.email);
@@ -132,7 +132,7 @@ function buildInviteEmailContent(template, mtg, listenerExists) {
   };
 }
 
-EmailEngine.prototype.sendNewListenerInviteEmail = function(address, mtg, done) {
+EmailEngine.prototype.sendNewListenerInviteEmail = function (address, mtg, done) {
   let template = fs.readFileSync(__dirname + '/../email_templates/inviteNewListener.html', 'utf8');
   let content = buildInviteEmailContent(template, mtg);
   sendInviteEmail.call(this, content, address, done);
@@ -155,15 +155,15 @@ EmailEngine.prototype.sendMsgReceivedEmail = function (mtg) {
   let email = new self.sendgrid_.Email();
 
   email.addTo(mtg[receiver].email);
-  email.setFrom('notifications@okpitch.com');
-  email.setFromName('OKPitch');
+  email.setFrom('notifications@app_name.com');
+  email.setFromName('AppName');
   email.setSubject('New message from ' + subjectName);
   email.setHtml(template);
   email.addHeader('X-Sent-Using', 'SendGrid-API');
   email.addHeader('X-Transport', 'web');
   self.sendgrid_.send(email,
-                      function(err, msg) {
-                        if (err){
+                      function (err, msg) {
+                        if (err) {
                           logger.warn('Didn\'t get a valid response from the SendGrid servers ' + err + '\nto : ' + receiver.address);
                         }
                         else
@@ -182,15 +182,15 @@ EmailEngine.prototype.sendMtgTimeChangedEmail = function (mtg) {
   let self = this;
   let email = new self.sendgrid_.Email();
   email.addTo(mtg[receiver].email);
-  email.setFrom('notifications@okpitch.com');
-  email.setFromName('OKPitch');
+  email.setFrom('notifications@app_name.com');
+  email.setFromName('AppName');
   email.setSubject(subjectName + ' is requesting a new start time');
   email.setHtml(template);
   email.addHeader('X-Sent-Using', 'SendGrid-API');
   email.addHeader('X-Transport', 'web');
   self.sendgrid_.send(email,
-                      function(err, msg) {
-                        if (err){
+                      function (err, msg) {
+                        if (err) {
                           logger.warn('Didn\'t get a valid response from the SendGrid servers ' + err + '\nto : ' + receiver.address);
                         }
                         else

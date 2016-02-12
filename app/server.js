@@ -40,7 +40,7 @@ function setupExceptionHandlers() {
     process.on(term_events[i], gracefullExit);
   }
 
-  process.on('uncaughtException', function(err) {
+  process.on('uncaughtException', function (err) {
     logger.warn(console.trace() + " error : " + err);
     throw err;
   });

@@ -15,38 +15,38 @@ stripe.setApiVersion('2015-06-15');
  */
 let StripeManager = module.exports = {};
 
-StripeManager.createAccount = function(_account, userType, done){
+StripeManager.createAccount = function (_account, userType, done) {
 
   console.log("createAccount " + JSON.stringify(_account));
   async.waterfall([
-    function(callback){
-      if(userType === 0){ // LISTENER
+    function (callback) {
+      if (userType === 0) { // LISTENER
         stripe.accounts.create(_account, callback);
       }
-      else if(userType === 1){ // PRESENTER
+      else if (userType === 1) { // PRESENTER
         stripe.customers.create(_account, callback);
       }
     },
-    function(_newStriper, callback){
+    function (_newStriper, callback) {
       callback(null, _newStriper);
     }],
-    function(err, _newStriper){
-      if(err)
+    function (err, _newStriper) {
+      if (err)
         return StripeManager.errorAnalysis(err, done);
       done(null, _newStriper);
     });
 };
 
-StripeManager.addCardToPresenter = function(stripeId, cardInfo, done){
-  stripe.customers.createSource(stripeId, {source : cardInfo}, function(err, _response){
-    if(err)
+StripeManager.addCardToPresenter = function (stripeId, cardInfo, done) {
+  stripe.customers.createSource(stripeId, {source : cardInfo}, function (err, _response) {
+    if (err)
       return StripeManager.errorAnalysis(err, done);
     done(null, _response);
   });
 };
 
 
-StripeManager.addBankAccount = function(transactor, bankInfo, done){
+StripeManager.addBankAccount = function (transactor, bankInfo, done) {
   let input = {"object" : "bank_account",
                "country": "US",
                "currency" : "usd",
@@ -70,59 +70,59 @@ StripeManager.addBankAccount = function(transactor, bankInfo, done){
   StripeManager.addPMToAccount(transactor.ss.stripeId, payload, done);
 };
 
-StripeManager.addPMToAccount = function(stripeId, payload, done){
+StripeManager.addPMToAccount = function (stripeId, payload, done) {
   async.waterfall([
-    function(callback){
+    function (callback) {
       stripe.accounts.update(stripeId, payload, callback);
     },
-    function(_response, callback){
+    function (_response, callback) {
       callback(null, _response);
     }],
-    function(err, response) {
-      if(err)
+    function (err, response) {
+      if (err)
         return StripeManager.errorAnalysis(err, done);
       done(null, response);
     });
 };
 
-StripeManager.updateManagedAccount = function(stripeId, update){
+StripeManager.updateManagedAccount = function (stripeId, update) {
   stripe.accounts.update(stripeId, update);
 };
 
-StripeManager.retrieve = function(transactor, done){
+StripeManager.retrieve = function (transactor, done) {
   async.waterfall([
-    function(callback){
-      if(transactor.type === 0) // LISTENER
+    function (callback) {
+      if (transactor.type === 0) // LISTENER
         stripe.accounts.retrieve(transactor.ss.stripeId, callback);
       else
         stripe.customers.retrieve(transactor.ss.stripeId, callback);
     },
-    function(_response, callback){
+    function (_response, callback) {
       callback(null, _response);
     }],
-    function(err, response) {
-      if(err)
+    function (err, response) {
+      if (err)
         return StripeManager.errorAnalysis(err, done);
       done(null, response);
     });
 };
 
-StripeManager.deleteCustomer = function(transactor, done){
+StripeManager.deleteCustomer = function (transactor, done) {
   stripe.customers.del(transactor.ss.stripeId, (err, confirmation) => {
-    if(err)
+    if (err)
       return done(err);
-    if(!confirmation.deleted)
+    if (!confirmation.deleted)
       return done(new Error("Unable to delete customer " + JSON.stringify(confirmation)));
     done();
   });
 };
 
-StripeManager.retrieveTransactions = function(transactor, done){
-  if(!transactor)  {
+StripeManager.retrieveTransactions = function (transactor, done) {
+  if (!transactor)  {
     return done(null, []);
   }
 
-  if(transactor.type === userTypes.LISTENER) { //receieves money, that means that we transfer money to him
+  if (transactor.type === userTypes.LISTENER) { //receieves money, that means that we transfer money to him
     StripeManager._getTransfers(transactor.ss.stripeId, [], done);
   } else if (transactor.type === userTypes.PRESENTER) { //pays
     StripeManager._getCharges(transactor.ss.stripeId, [], done);
@@ -134,17 +134,17 @@ StripeManager.retrieveTransactions = function(transactor, done){
 //both _getCharges and _getTransfers are calling themselves as stripe
 //results are paginated
 
-StripeManager._getCharges = function(stripeId, buffer, done) {
+StripeManager._getCharges = function (stripeId, buffer, done) {
   stripe.charges.list({
     limit : 100,
     customer : stripeId,
     starting_after : (buffer[buffer.length - 1] || {}).id
   }, (error, result) => {
-    if(error) {
+    if (error) {
       return StripeManager.errorAnalysis(error, done);
     }
 
-    if(result.has_more) {
+    if (result.has_more) {
       return StripeManager._getCharges(stripeId, buffer.concat(result.data), done);
     }
 
@@ -152,7 +152,7 @@ StripeManager._getCharges = function(stripeId, buffer, done) {
   });
 };
 
-StripeManager._getTransfers = function(stripeId, buffer, done) {
+StripeManager._getTransfers = function (stripeId, buffer, done) {
   stripe.transfers.list({
     limit : 100,
     //@XXX destination isnt in api docs but it works, recipient
@@ -161,11 +161,11 @@ StripeManager._getTransfers = function(stripeId, buffer, done) {
     destination : stripeId,
     starting_after : (buffer[buffer.length - 1] || {}).id
   }, (error, result) => {
-    if(error) {
+    if (error) {
       return StripeManager.errorAnalysis(error, done);
     }
 
-    if(result.has_more) {
+    if (result.has_more) {
       return StripeManager._getTransfers(stripeId, buffer.concat(result.data), done);
     }
 
@@ -173,7 +173,7 @@ StripeManager._getTransfers = function(stripeId, buffer, done) {
   });
 };
 
-StripeManager.errorAnalysis = function(err, done){
+StripeManager.errorAnalysis = function (err, done) {
   console.log(err);
   switch (err.type) {
     case 'StripeCardError':
@@ -197,21 +197,21 @@ StripeManager.errorAnalysis = function(err, done){
   }
 };
 
-StripeManager.getAccounts = function(done){
+StripeManager.getAccounts = function (done) {
   async.waterfall([
-    function(callback){
+    function (callback) {
       stripe.accounts.list({limit : 30}, callback);
     },
-    function(accounts, callback){
+    function (accounts, callback) {
       console.log("accounts count " + accounts.data.length);
       callback();
     }],
-    function(err){
+    function (err) {
       done(err);
     });
 };
 
-StripeManager.charge = function(listenerTransactor, presenterTransactor, meeting, done) {
+StripeManager.charge = function (listenerTransactor, presenterTransactor, meeting, done) {
   let amount = Math.floor((meeting.duration / 60) * meeting.rate * 100),
     meetingDate = new Date(meeting.startTime * 1000);
 
@@ -227,7 +227,7 @@ StripeManager.charge = function(listenerTransactor, presenterTransactor, meeting
       meetingId : meeting._id.toString()
     }
   }, (error) => {
-    if(error) {
+    if (error) {
       return StripeManager.errorAnalysis(error, done);
     }
 

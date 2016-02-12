@@ -8,7 +8,7 @@ let projections = module.exports;
 projections.currentUser = function (user) {
   let newUser = Object.clone(user, true);
 
-  if(!Object.isString(newUser._id)){
+  if (!Object.isString(newUser._id)) {
     let temp = ObjectId(newUser._id.id);
     newUser._id = temp.toHexString();
   }
@@ -20,7 +20,7 @@ projections.user = function (user) {
   let newUser = Object.clone(user, true);
   newUser = Object.reject(newUser, ['hash', 'password', 'reEnterPassword']);
 
-  if(!Object.isString(newUser._id)){
+  if (!Object.isString(newUser._id)) {
     let temp = ObjectId(newUser._id.id);
     newUser._id = temp.toHexString();
   }
@@ -29,10 +29,10 @@ projections.user = function (user) {
 };
 
 
-projections.transactor = function(details) {
+projections.transactor = function (details) {
   var filtered = Object.clone(details, true);
 
-  if(filtered.type === 0) // LISTENER
+  if (filtered.type === 0) // LISTENER
     filtered.visible.publishableKey = filtered.ss.keys.publishable;
 
   filtered = Object.reject(filtered, ['ss', '_id']);
@@ -40,7 +40,7 @@ projections.transactor = function(details) {
   return filtered;
 };
 
-projections.card = function(_card){
+projections.card = function (_card) {
   let result = {type : 0}; // card
 
   result.last4 = _card.last4;
@@ -56,7 +56,7 @@ projections.card = function(_card){
   return result;
 };
 
-projections.bankAccount = function(_bankAccount){
+projections.bankAccount = function (_bankAccount) {
   let result = {type : 1}; //bank account
   result.last4 = _bankAccount.last4;
   result.bankName = _bankAccount.bank_name;
@@ -65,7 +65,7 @@ projections.bankAccount = function(_bankAccount){
   return result;
 };
 
-projections.charge = function(charge) {
+projections.charge = function (charge) {
   return {
     type : 'charge',
     amount : charge.amount,
@@ -77,7 +77,7 @@ projections.charge = function(charge) {
   };
 };
 
-projections.transfer = function(transfer) {
+projections.transfer = function (transfer) {
   return {
     type : 'transfer',
     amount : transfer.amount,
