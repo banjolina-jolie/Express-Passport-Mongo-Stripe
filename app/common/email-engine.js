@@ -51,7 +51,7 @@ EmailEngine.prototype.sendValidationEmail = function(user, done) {
   internalNotif.addTo('dylan@okpitch.com');
   internalNotif.setFrom('signups@okpitch.com');
   internalNotif.setSubject('New User Signup');
-  internalNotif.setText(user.name + ' ' + user.surname + ' ' + user.email + ' ' + user.meta.jobTitle + ' ' + user.meta.employer);
+  internalNotif.setText(user.name + ' ' + user.last_name + ' ' + user.email + ' ' + user.meta.jobTitle + ' ' + user.meta.employer);
   internalNotif.addHeader('X-Sent-Using', 'SendGrid-API');
   internalNotif.addHeader('X-Transport', 'web');
   self.sendgrid_.send(internalNotif,

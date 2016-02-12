@@ -99,16 +99,16 @@ function deleteUser(req, res){
 }
 
 // This method is used from both the front page and the admin panel
-// Search on the site -> {q : $NAME} -> does a regex search across name, surname and username
+// Search on the site -> {q : $NAME} -> does a regex search across name, last_name and username
 // Search on the admin panel -> {key : value.....}, exact find using key value pairs
 function searchUsers(req, res){
   let query = {};
   if(req.query.q){
     // Used by search at front end
-    // Regex match across name, surname and username for now
+    // Regex match across name, last_name and username for now
     let matcher =  "^" + req.query.q;
     query = { $or : [{name : {$regex : matcher, $options : "si"}},
-                     {surname : {$regex : matcher, $options : "si"}},
+                     {last_name : {$regex : matcher, $options : "si"}},
                      {username : {$regex : matcher, $options : "si"}}]};
     // for type 1 users, only return type 0 users.  And vis-versa.
     // type 2 users (super users) will see search results for types 0 AND 1.

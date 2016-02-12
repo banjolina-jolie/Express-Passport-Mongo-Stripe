@@ -144,7 +144,7 @@ Transactor.addPaymentMethod = function(user, transactor, payload, done){
   if(incomingType === paymentMethods.CARD){
 
     let newCard = {object : "card",
-                   name : user.name + " " + user.surname,
+                   name : user.name + " " + user.last_name,
                    currency : "usd",
                    address_country: "US", /// Hardcoded, US only for now (TODO)
                    address_zip: payload.details.postal_code,
@@ -299,7 +299,7 @@ Transactor.createAppropriateStripeAccount = function(_user){
           country: 'US',
           email: _user.email,
           legal_entity : {first_name : _user.name,
-                          last_name : _user.surname,
+                          last_name : _user.last_name,
                           dob : _user.meta.dob,
                           address : _user.meta.address,
                           type : "individual"}};
