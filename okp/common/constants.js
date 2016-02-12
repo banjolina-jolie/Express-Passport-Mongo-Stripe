@@ -31,25 +31,6 @@ Constants.userRating = {
   FIVESTAR : 5
 };
 
-/**
-MEETING
-**/
-Constants.meetingStates = {
-  PENDING_ON_LISTENER_CONFIRM : 0,     // waiting on listener
-  PENDING_ON_PRESENTER_CONFIRM : 1,    // waiting on presenter but of course.
-  PLANNED : 2,
-  ONGOING : 3,
-  ENDED_NO_FEEDBACK : 4,               // meeting has ended but listener hasn't yet given feedback
-  LISTENER_ACCEPTS_PAYMENT : 5,
-  LISTENER_REJECTS_PAYMENTS : 6,
-  PAYMENT_SETTLED : 7,
-  PAYMENT_TROUBLE : 8,
-  CANCELLED : 9
-};
-
-Constants.meetingType = {
-  PITCH : 0
-};
 
 /**
 TRANSACTOR

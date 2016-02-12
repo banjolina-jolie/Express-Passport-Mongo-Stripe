@@ -2,7 +2,6 @@
 
 let config = require('./common/config');
 let http = require('http');
-let https = require('https');
 let loggerEntry = require('./common/logger');
 let logger = require('./common/logger').forFile('OKP API Server');
 let fs = require('fs');
@@ -13,12 +12,6 @@ let setupApp = require('./app');
 loggerEntry.initServer();
 logger.info("Fire up the big guns on port " + process.env.PORT);
 
-var certs = {
-  key: fs.readFileSync(__dirname + '/../certs/server.key'),
-  cert: fs.readFileSync(__dirname + '/../certs/server.crt'),
-  ca: fs.readFileSync(__dirname + '/../certs/ca.crt'),
-  passphrase: 'gulp'
-};
 
 function errorHandler(err, req, res, next) {
   logger.warn("error handler " + err);
@@ -33,7 +26,6 @@ function configureApp(app) {
   logger.info("Setting API server port to " + config.API_PORT);
   app.set('port', config.API_PORT);
   app.use(errorHandler);
-  //app.set('proxyport', 80);
 }
 
 function setupExceptionHandlers() {
@@ -68,8 +60,6 @@ function setupExceptionHandlers() {
   app = setupApp(theSession);
   configureApp(app);
   setupExceptionHandlers();
-
-  //var server =  https.createServer(certs, app);
 
   var server =  http.createServer(app);
   server.listen(app.get('port'));

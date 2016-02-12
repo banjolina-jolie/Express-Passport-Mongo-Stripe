@@ -1,12 +1,7 @@
-## OKPitch API Server
+## Express.js API Generator
 
-Express API server for okpitch.com (multiplatform).
 
 ### Quick Setup
 
 - npm install
 - node --harmony okp/server.js
-
-Copyright okpitch
-
-

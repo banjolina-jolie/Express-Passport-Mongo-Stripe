@@ -10,8 +10,6 @@ let constants = require('../common/constants');
 let EmailSender = require('../common/email-engine');
 let Model = require('./model');
 let Seq = require('seq');
-let Schedule = require('./schedule');
-let Meeting = require('./meeting');
 let Storage = require('../common/storage');
 let Transactor = require('./transactor');
 /**

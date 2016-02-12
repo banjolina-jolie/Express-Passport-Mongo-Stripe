@@ -66,28 +66,6 @@ Storage.prototype.deleteObject = function(key, done){
 };
 
 // TODO
-// refactor all the puts together
-Storage.prototype.putSlideshow = function(key, payload, done){
-  logger.info("storage put slideshow " + key);
-  let self = this;
-  let buf = new Buffer(payload, 'base64');
-  let data = {Key: key,
-              Body: buf,
-              ContentEncoding: 'base64',
-              Bucket: self.name_,
-              ContentType: 'application/pdf',
-              ACL:'public-read'};
-  self.s3_.putObject(data, function(err, data){
-    logger.info("after put object " + err);
-    if(err){
-      logger.error('Error uploading pdf: ' + err);
-      return done(err);
-    }
-    done();
-  });
-};
-
-// TODO
 // remove public flag post dev
 Storage.prototype.put = function(key, payload, done){
   let self = this;

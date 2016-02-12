@@ -7,12 +7,8 @@ let projections = require("../common/projections.js");
 let utilities = require("../common/utilities");
 let projectUser = projections.user;
 let projectCurrentUser = projections.currentUser;
-let projectMeetingTimes = projections.meetingTimes;
-let projectSchedule = projections.schedule;
 let Seq = require('seq');
 let User = require("../models/user.js");
-let Meeting = require("../models/meeting");
-let Schedule = require("../models/schedule");
 
 function registerUser(req, res) {
   let ip = req.headers['x-forwarded-for'] ||
@@ -60,17 +56,6 @@ function getUser(req, res){
       if(!_user)
         return res.status(404).send();
       user = _user;
-      Meeting.findUpcomingByUser(_user, this);
-    })
-    .seq(function(_meetings){
-      if(!_meetings || _meetings.isEmpty())
-        user.meetings = [];
-      else
-        user.meetings = _meetings.map(projectMeetingTimes);
-      Schedule.findByUser(user, this);
-    })
-    .seq(function(_schedule){
-      user.schedule = projectSchedule(_schedule);
       res.status(200).json(projectUser(user));
     })
     .catch(function(err){
@@ -180,15 +165,6 @@ function getUsers (req, res) {
   });
 }
 
-function uploadSlideshow(req, res){
-  res.status(200).send();
-}
-
-function deleteSlideshow(req, res){
-  res.status(200).send();
-}
-
-
 module.exports = function(router) {
   router.route('/users')
     .post(registerUser);
@@ -208,11 +184,5 @@ module.exports = function(router) {
   router.route('/api/users/:user_id')
     .put(updateUser)
     .delete(deleteUser);
-
-  router.route('/api/users/:user_id/slideshows')
-    .post(uploadSlideshow);
-
-  router.route('/api/users/:user_id/:slideshow_id')
-    .post(deleteSlideshow);
 };
 

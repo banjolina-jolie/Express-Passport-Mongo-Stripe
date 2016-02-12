@@ -11,9 +11,7 @@ if(env.NODE_ENV !== "production"){
 	require('dotenv').load();
 }
 
-config.API_SERVER = env.API_SERVER;
 config.MONGODB_URL = env.MONGOLAB_URI;
-config.MONGODB_PORT = env.MONGODB_PORT;
 config.MONGODB_DATABASE = env === "test" ? "okpTest" : env.MONGODB_DATABASE;
 config.MONGODB_USERNAME = env.MONGODB_USERNAME;
 config.MONGODB_PASSWORD = env.MONGO_PASSWORD;
