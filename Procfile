@@ -1,0 +1,1 @@
+web: node --harmony okp/server.js
