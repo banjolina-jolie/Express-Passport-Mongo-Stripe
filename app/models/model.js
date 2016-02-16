@@ -29,8 +29,9 @@ Model.prototype.init = function (collection) {
     self.db_ = db;
     self.collection_ = coll;
 
-    if (self.members_)
+    if (self.members_) {
       self.createGetters();
+    }
 
     self.emit("ready");
   });
@@ -62,8 +63,7 @@ Model.prototype.baseFind = function (attr, value, done) {
     })
     .catch(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 /*
@@ -103,8 +103,7 @@ Model.baseFinder = function (attr, value, done) {
     })
     .seq(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 Model.capitalize = function (input) {
@@ -138,8 +137,7 @@ Model.findById = function (searchId, done) {
     })
     .catch(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 Model.create = function (entry, done) {
@@ -159,8 +157,9 @@ Model.create = function (entry, done) {
       self.validate(entry, this);
     })
     .seq(function (validation) {
-      if (!validation.result)
+      if (!validation.result) {
         return done(null, validation);
+      }
       self.collection_.insert(entry, this);
     })
     .seq(function (result) {
@@ -168,8 +167,7 @@ Model.create = function (entry, done) {
     })
     .catch(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 Model.find = function (params, done) {
@@ -189,8 +187,7 @@ Model.find = function (params, done) {
     })
     .catch(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 Model.findOne = function (params, done) {
@@ -210,8 +207,7 @@ Model.findOne = function (params, done) {
     })
     .catch(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 Model.updateAll = function (id, payload, done) {
@@ -249,8 +245,7 @@ Model.updateAll = function (id, payload, done) {
     })
     .catch(function (err) {
       done(err);
-    })
-    ;
+    });
 };
 
 
@@ -281,8 +276,7 @@ Model.delete = function (id, done) {
     })
     .catch(function (err) {
       done(err);
-    })
-    ;
+    });
 };
 
 Model.findByAttribute = function (attr, value, done) {
@@ -307,8 +301,7 @@ Model.findByAttribute = function (attr, value, done) {
     })
     .catch(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 Model.updateSet = function (key, value, id, done) {
@@ -383,8 +376,7 @@ Model.updatePush = function (id, key, value, done) {
     })
     .catch(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 Model.updatePull = function (id, key, valueQuery, done) {
@@ -422,8 +414,7 @@ Model.updatePull = function (id, key, valueQuery, done) {
     })
     .catch(function (err) {
       done(self.name + "" + err.toString());
-    })
-    ;
+    });
 };
 
 Model.findAndModify = function (query, update, done) {
@@ -450,8 +441,7 @@ Model.findAndModify = function (query, update, done) {
     })
     .catch(function (err) {
       done(err);
-    })
-    ;
+    });
 };
 
 Model.translateObjectId = function (id) {

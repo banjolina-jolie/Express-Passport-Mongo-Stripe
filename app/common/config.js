@@ -3,7 +3,7 @@
 let config = exports;
 let env = process.env;
 
-config.SESSION_SECRET = "ShesaysthathesaysthattheysaythatYOUsaythatonesaysthatweallsaysaywhat?";
+config.SESSION_SECRET = "SweetSucculentAndFine!";
 
 if (env.NODE_ENV !== "production") {
 	// Automatically load .env file that should be found at the root of the project dir.
@@ -24,3 +24,5 @@ config.AWS_SECRET_KEY = env.AWS_SECRET_KEY;
 config.AWS_REGION = env.AWS_REGION;
 config.API_PORT = env.PORT;
 config.FE_URL = env.FE_URL;
+config.FB_APP_ID = env.FB_APP_ID;
+config.FB_APP_SECRET = env.FB_APP_SECRET;

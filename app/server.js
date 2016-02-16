@@ -3,7 +3,7 @@
 let config = require('./common/config');
 let http = require('http');
 let loggerEntry = require('./common/logger');
-let logger = require('./common/logger').forFile('OKP API Server');
+let logger = require('./common/logger').forFile('Sample API Server');
 let fs = require('fs');
 let session = require('express-session');
 let MongoStore = require('connect-mongo')(session);

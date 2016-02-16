@@ -1,6 +1,7 @@
-
 "use strict";
+
 require('sugar');
+let config = require('./common/config');
 let async = require('async');
 let isUserAuthenticated = require('./common/ensure-auth.js').isUserAuthenticated;
 let bcrypt = require('bcrypt');
@@ -14,6 +15,7 @@ let projectCurrentUser = require("./common/projections.js").currentUser;
 let constants = require("./common/constants");
 
 let LocalStrategy = require('passport-local').Strategy;
+let FacebookStrategy = require('passport-facebook').Strategy;
 let User = require('./models/user');
 
 let API = module.exports;
@@ -238,6 +240,50 @@ API.init = function () {
   passport.use(new LocalStrategy(opts, authenticate));
   passport.serializeUser(serializeUser);
   passport.deserializeUser(deserializeUser);
+
+  passport.use(new FacebookStrategy({
+    clientID: config.FB_APP_ID,
+    clientSecret: config.FB_APP_SECRET,
+    callbackURL: "http://localhost:3001/auth/facebook/callback",
+    profileFields: ['first_name', 'last_name', 'picture', 'friends', 'email']
+  }, function(accessToken, refreshToken, profile, done) {
+    process.nextTick(function() {
+      // find the user in the database based on their facebook id
+      User.findOne({ 'facebookId' : profile.id }, function(err, user) {
+ 
+        // if there is an error, stop everything and return that
+        // ie an error connecting to the database
+        if (err)
+          return done(err);
+          
+          // if the user is found, then log them in
+          if (user) {
+            console.log('returning USER')
+            return done(null, user); // user found, return that user
+          } else {
+            // if there is no user found with that facebook id, create them
+            var newUser = new User();
+            // set all of the facebook information in our user model
+            newUser.facebookId    = profile.id; // set the users facebook id                 
+            newUser.facebookAccessToken = accessToken; // we will save the token that facebook provides to the user                    
+            newUser.first_name  = profile._json.first_name;
+            newUser.last_name = profile._json.last_name; // look at the passport user profile to see how names are returned
+            newUser.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
+            newUser.picture = profile._json.picture.data.url;
+            newUser.friends = profile._json.friends;
+
+            // save our user to the database
+            User.Create(newUser, {}, function(err, _user) {
+              if (err) {
+                throw err;
+              }
+              // if successful, return the new user
+              return done(null, _user);
+            });
+         } 
+      });
+    });
+  }));
 };
 
 /**
@@ -267,10 +313,28 @@ API.createRouter = function () {
     .post(login)
     .get(checkAuthenticated);
 
+
+  router.get('/auth/facebook', 
+    passport.authenticate('facebook', { scope : 'email' })
+  );
+   
+  // handle the callback after facebook has authenticated the user
+  router.get('/auth/facebook/callback',
+    passport.authenticate('facebook', {
+      successRedirect : '/fblogin',
+      failureRedirect : '/login'
+    })
+  );
+
   router.all('/api/*', isUserAuthenticated);
 
   require('./controllers/users')(router);
   require('./controllers/transactors')(router);
+
+  router.route('/fblogin')
+    .get(function (req, res) {
+      res.send(req.user);
+    });
 
   router.route('/validator')
     .post(validator);

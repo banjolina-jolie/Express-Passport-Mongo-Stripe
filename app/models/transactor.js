@@ -112,8 +112,9 @@ Transactor.refresh = function (transactor, done) {
 Transactor.populate = function (transactor, stripeInfo) {
   transactor.visible.paymentMethods = [];
   if (transactor.type === transactorTypes.RECEIVER) {
-    if (stripeInfo.external_accounts.total_count === 0)
+    if (stripeInfo.external_accounts.total_count === 0) {
       return transactor;
+    }
     stripeInfo.external_accounts.data.each((pm) => {
       if (pm.object === "bank_account") {
         transactor.visible.paymentMethods.push(projectBankAccount(pm));
@@ -122,12 +123,14 @@ Transactor.populate = function (transactor, stripeInfo) {
        transactor.visible.paymentMethods.push(projectCard(pm));
       }
     });
-    transactor.visible.verification = {detailsSubmitted : stripeInfo.details_submitted,
-                                       chargesEnabled : stripeInfo.charges_enabled,
-                                       transfersEnabled : stripeInfo.transers_enabled,
-                                       required : stripeInfo.verification};
+    transactor.visible.verification = {
+      detailsSubmitted : stripeInfo.details_submitted,
+      chargesEnabled : stripeInfo.charges_enabled,
+      transfersEnabled : stripeInfo.transers_enabled,
+      required : stripeInfo.verification
+    };
   }
-  else{ // and the user.
+  else {
     if (stripeInfo.sources.total_count === 0) {
       return transactor;
     }
@@ -145,34 +148,35 @@ Transactor.addPaymentMethod = function (user, transactor, payload, done) {
 
   if (incomingType === paymentMethods.CARD) {
 
-    let newCard = {object : "card",
-                   name : user.name + " " + user.last_name,
-                   currency : "usd",
-                   address_country: "US", /// Hardcoded, US only for now (TODO)
-                   address_zip: payload.details.postal_code,
-                   address_line1 : payload.details.line1,
-                   address_line2 : payload.details.line2,
-                   address_state : payload.details.state,
-                   address_city : payload.details.city,
-                   number : payload.details.card_number,
-                   exp_month : parseInt(payload.details.exp_month),
-                   exp_year : parseInt(payload.details.exp_year),
-                   cvc : payload.details.cvc
-                 };
+    let newCard = {
+      object : "card",
+      name : user.name + " " + user.last_name,
+      currency : "usd",
+      address_country: "US", /// Hardcoded, US only for now (TODO)
+      address_zip: payload.details.postal_code,
+      address_line1 : payload.details.line1,
+      address_line2 : payload.details.line2,
+      address_state : payload.details.state,
+      address_city : payload.details.city,
+      number : payload.details.card_number,
+      exp_month : parseInt(payload.details.exp_month),
+      exp_year : parseInt(payload.details.exp_year),
+      cvc : payload.details.cvc
+    };
 
     //console.log("newCard looks like " + JSON.stringify(newCard));
     //console.log("card incoming looks like " + JSON.stringify(payload.details));
     // Have to assume that it is a user.
     stripeManager.addCardToPresenter(transactor.ss.stripeId, newCard, done);
   }
-  else if (incomingType === paymentMethods.BANK_ACCOUNT ||
-          incomingType === paymentMethods.PAYPAL) {
+  else if (incomingType === paymentMethods.BANK_ACCOUNT || incomingType === paymentMethods.PAYPAL) {
     // have to assume that it is a listener
     //console.log("BA incoming looks like " + JSON.stringify(payload.details));
     stripeManager.addBankAccount(transactor, payload.details, function (err, _response) {
       //console.log("add bank account response " + JSON.stringify(_response) + " err : " + err);
-      if (err)
+      if (err) {
         return done(err);
+      }
       done(null, _response.bank_accounts.data);
     });
   }
@@ -188,11 +192,13 @@ Transactor.updatePaymentDetails = function (user, payload, done) {
     },
     function (_transactor, callback) {
       transactor = _transactor;
-      if (transactor.type === transactorTypes.RECEIVER)
+      if (transactor.type === transactorTypes.RECEIVER) {
         return callback();
+      }
       Transactor.userlaceCustomer(user, transactor, (err, updatedTransactor) => {
-        if (err)
+        if (err) {
           return callback(err);
+        }
         transactor = updatedTransactor;
         callback();
       });
@@ -228,15 +234,12 @@ Transactor.userlaceCustomer = function (user, transactor, done) {
       stripeManager.createAccount(account, user.type, cb);
     },
     (_stripeResponse, cb) => {
-      Model.updateSet.call(Transactor,
-                          "ss.stripeId",
-                          _stripeResponse.id,
-                          transactor._id,
-                          cb);
+      Model.updateSet.call(Transactor, "ss.stripeId", _stripeResponse.id, transactor._id, cb);
     }],
     (err, _transactor) => {
-      if (err)
+      if (err) {
         return done(err);
+      }
       done(null, _transactor);
     });
 };
@@ -256,13 +259,20 @@ Transactor.create = function (user, ip, done) {
     (_stripeResponse, callback) => {
       stripeResponse = _stripeResponse;
       entry.ss.stripeId = stripeResponse.id;
-      let update = {tos_acceptance : {date: Math.floor(Date.now() / 1000),
-                                      ip : ip},
-                    metadata : {"created" : Date.create().format('{yyyy}-{MM}-{dd}--{HH}:{mm}')}};
+      let update = {
+        tos_acceptance : {
+          date: Math.floor(Date.now() / 1000),
+          ip : ip
+        },
+        metadata : {
+          "created" : Date.create().format('{yyyy}-{MM}-{dd}--{HH}:{mm}')
+        }
+      };
 
       Object.merge(entry, update);
-      if (entry.type !== transactorTypes.RECEIVER)
+      if (entry.type !== transactorTypes.RECEIVER) {
         return callback();
+      }
       // otherwise it's a managed account
       entry.ss.keys = stripeResponse.keys;
 
@@ -273,38 +283,48 @@ Transactor.create = function (user, ip, done) {
       Model.create.call(Transactor, entry, callback);
     }],
     function (err) {
-      if (err)
+      if (err) {
         return done(err);
+      }
       done(null, Transactor.populate(entry, stripeResponse));
     });
 };
 
 Transactor.createEntry = function (user) {
-  return {userId : user._id.toString(),
-          type : user.type,
-          logs : [],
-          ss : {"currency" : "usd",
-                "state" : {} },
-          visible : {}};
+  return {
+    userId : user._id.toString(),
+    type : user.type,
+    logs : [],
+    ss : {"currency" : "usd",
+          "state" : {} },
+    visible : {}
+  };
 };
 
 Transactor.createAppropriateStripeAccount = function (_user) {
   if (_user.type === transactorTypes.CUSTOMER) {
-    return {description : "AppName user " + _user.username,
-            email: _user.email,
-            metadata : {profession: _user.meta.profession,
-                        userId : _user._id.toString(),
-                        created : Date.create().format('{yyyy}-{MM}-{dd}--{HH}:{mm}')}};
+    return {
+      description : "AppName user " + _user.first_name + ' ' + _user.last_name,
+      email: _user.email,
+      metadata : {
+        userId : _user._id.toString(),
+        created : Date.create().format('{yyyy}-{MM}-{dd}--{HH}:{mm}')
+      }
+    };
   }
   // => transactorTypes.receiver || user.listener
-  return {managed: true,
-          country: 'US',
-          email: _user.email,
-          legal_entity : {first_name : _user.name,
-                          last_name : _user.last_name,
-                          dob : _user.meta.dob,
-                          address : _user.meta.address,
-                          type : "individual"}};
+  return {
+    managed: true,
+    country: 'US',
+    email: _user.email,
+    legal_entity : {
+      first_name : _user.name,
+      last_name : _user.last_name,
+      dob : _user.dob,
+      address : _user.address,
+      type : "individual"
+    }
+  };
 };
 
 Transactor.findByUserAndType = function (params, done) {

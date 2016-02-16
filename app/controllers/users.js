@@ -28,12 +28,11 @@ function registerUser(req, res) {
     })
     .seq(function (result) {
       if (result.result) {
-        logger.info("Created new user " + result.user.name);
+        logger.info("Created new user " + result.user.first_name);
         res.cookie("currentUser", result.user.state);
         res.status(201).json(projectUser(result.user));
         this();
-      }
-      else{
+      } else{
         logger.info("Failed to create a new user " + result.message);
         res.status(422).json(result);
       }
@@ -82,8 +81,7 @@ function updateUser(req, res) {
   	})
   	.catch(function (err) {
   		res.status(500).json({error : err});
-  	})
-  	;
+  	});
 }
 
 function deleteUser(req, res) {

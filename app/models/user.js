@@ -12,6 +12,7 @@ let Model = require('./model');
 let Seq = require('seq');
 let Storage = require('../common/storage');
 let Transactor = require('./transactor');
+
 /**
  * Wraps the users table.
  *
@@ -19,38 +20,22 @@ let Transactor = require('./transactor');
  *
  * So far the schema is
  *
- * {name: "",
-    username: ""
+ * {
+    first_name: "",
+    last_name: ""
     email: "" (*unique),
+    picture: "",
+    friends: [],
     hash: password hashed,
     state: constants.userStates.*
-    last_name: ""
-    type: constants.userTypes.*,
-    metadata: {professions: [{ name: "Physician",
-                                 speciality: {name: "", subSpecialities: []}]
-                education: [{university: ""
-                              qualification: ""}]
-                employment: {title: ""
-                              employer: ""}
-                telephone: {region: 'us'|?,
-                            areaCode: [0-9]*,
-                            number: [0-9]*}
-                address: ""
-                bio: ""
-                picture: "",
-                price: {rate: X,
-                         currency: $CurrencyCode},
-                ratings: [ {rater: email,
-                            createdAt: date,
-                            rating: user.Rating}]
-
-              }
-    validation: {createdAt: ts
-                  token: "" }
+    validation: {
+      createdAt: ts,
+      token: ""
     }
+  }
  **/
 
-let members = ["email","username"];
+let members = ["email","first_name", "last_name"];
 
 module.exports = function () {
   this.name = "User";
@@ -61,7 +46,6 @@ let User = module.exports;
 
 util.inherits(User, Model);
 
-// TODO needs testing
 User.prototype.ratings = function () {
   let self = this;
   let figures = self.ratings.map(function (rating) {
@@ -75,52 +59,32 @@ User.prototype.validate = function (_user, done) {
 
   Seq()
     .seq(function () {
-      if (!_user.email || !_user.name || !_user.password) {
+      if (!_user.facebookId && (!_user.email || !_user.name || !_user.password)) {
         let result  = {
           result: false,
-          message: "New users need at least a name, email, password and a type"
+          message: "New users need at least a name, email, and a password"
         };
         return done(null, result);
       }
       this();
     })
     .seq(function () {
-      let query  = {$or: [{email: _user.email}, {username: _user.username}]};
+      let query  = {$or: [{email: _user.email}, {id: _user.id}]};
       self.collection_.findOne(query, this);
     })
     .seq(function (previous) {
       if (previous) {
-        let result  = {result: false,
-                       message: "We already have a user with this same email or username"};
+        let result  = {
+          result: false,
+          message: "We already have a user with this same email or username"
+        };
         return done(null, result);
       }
       done(null, {result: true});
     })
     .catch(function (err) {
       done(err);
-    })
-    ;
-};
-
-User.prototype.addRatings = function (rating, done) {
-  let self = this;
-  // TODO validate rating range (with regards enum)
-  // Can the same 'rater' give ratings twice to the same person.
-  // I would think not, Validations needed here.
-
-  rating["createdAt"] = Date.now();
-
-  let query = {
-    email: self.email
-  };
-
-  // TODO - what is this ?
-  let updates = {
-    $push: { 'metadata.ratings': {}}
-  };
-
-  self.collection_.update(query, updates, done);
-
+    });
 };
 
 /**
@@ -139,13 +103,6 @@ User.findByToken = Model.findByAttribute.bind(User, "validation.token"); // $tok
 User.verifyEmail = Model.updateSet.bind(User, 'state', constants.userStates.NEEDSREVIEW); // _id, done);
 User.changeState = Model.updateSet.bind(User, 'state'); //state, done);
 
-User.addSlideshow = function (userId, slideshow, done) {
-  Model.updatePush.call(User, userId, "slideshows", slideshow, done);
-};
-
-User.removeSlideshow = function (userId, slideshowId, done) {
-  Model.updatePull.call(User, userId, "slideshows", {id: slideshowId}, done);
-};
 
 User.delete = function (userId, done) {
   let user;
@@ -201,7 +158,6 @@ User.update = function (id, update, done) {
         if (err)
           return this(err);
         if (!result.success) {
-          console.log("no joy updating password");
           return done(null, result);
         }
         this();
@@ -305,59 +261,47 @@ User.Create = function (_user, ip, done) {
       if (!validation.result) {
         return done(null, validation);
       }
-      _user.created = Date.now();
-      User.hashPassword(_user.password, this);
-    })
-    .seq(function (_hash) {
-      user = Object.reject(_user, ['password', 'completions', 'showCompletions', 'reEnterPassword']);
-      user.hash = _hash;
-      user.tos_acceptance = {
-        date: Math.floor(Date.now() / 1000),
-        ip: ip
-      };
-
-      let shasum = crypto.createHash('sha1');
-      shasum.update(user.email+Date.now());
-
-      user.validation = {createdAt: Date.now(),
-                         token: shasum.digest('hex')};
-
-      user.state = constants.userTypes.NEEDS_EMAIL_VERIFICATION;
-      
-      // Insert into Mongo
+      // User.hashPassword(_user.password, this);
+      user.created = Date.now();
+      user.first_name = _user.first_name;
+      user.last_name = _user.last_name;
+      user.email = _user.email;
+      user.facebookId = _user.facebookId;
+      user.facebookAccessToken = _user.facebookAccessToken;
+      user.picture = _user.picture;
+      user.friends = _user.friends;
       self.collection_.insert(user, this);
     })
-    .seq(function () {
-      let emailManager = new EmailSender();
-      let that = this;
-      emailManager.sendValidationEmail(user, function (err) {
-        if (err) {
-          logger.warn("Unable to send validation emails " + err + " \n user: " + user.email);
-          return that();
-        }
-        var query = { email: user.email };
-        var update = {
-          $set: {
-            state: constants.userStates.AWAITS_EMAIL_VERIFICATION
-          }
-        };
-        self.collection_.update(query, update, function (err) {
-          that(err);
-        });
-      });
-    })
+    // .seq(function () {
+    //   // let emailManager = new EmailSender();
+    //   // let that = this;
+    //   // emailManager.sendValidationEmail(user, function (err) {
+    //   //   if (err) {
+    //   //     logger.warn("Unable to send validation emails " + err + " \n user: " + user.email);
+    //   //     return that();
+    //   //   }
+    //     var query = { email: user.email };
+    //     var update = {
+    //       $set: {
+    //         state: constants.userStates.AWAITS_EMAIL_VERIFICATION
+    //       }
+    //     };
+    //     self.collection_.update(query, update, function (err) {
+    //       this(err);
+    //     });
+    //   // });
+    // })
     .seq(function () {
       self.collection_.findOne({email: user.email}, this);
     })
     .seq(function (_user) {
-      user =_user;
-      Transactor.create(user, ip, this);
+      Transactor.create(_user, ip, this);
     })
-    .seq(function (_transactor) {
-      Schedule.createBlank(user, this);
-    })
-    .seq(function () {
-      logger.info(util.format("created user %s, request ip %s", JSON.stringify(_user), ip));
+    .seq(function (err) {
+      if (err) {
+        console.log(err);
+      }
+      logger.info(util.format("created user %s, request ip %s", JSON.stringify(user), ip));
       done(null, {result:true, user: user});
     })
     .catch(function (err) {
@@ -382,4 +326,3 @@ User.hashPassword = function (password, callback) {
     bcrypt.hash(password, salt, callback);
   });
 };
-
