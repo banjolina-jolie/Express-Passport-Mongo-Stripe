@@ -1,5 +1,6 @@
 "use strict";
 
+let _ = require('lodash');
 let logger = require('../common/logger.js').forFile('controllers/users.js');
 let constants = require('../common/constants');
 let ObjectId = require('mongodb').ObjectID;
@@ -163,6 +164,47 @@ function getUsers (req, res) {
   });
 }
 
+function fbFindOrCreate(req, res) {
+  let profile = req.body;
+
+  let ip = req.headers['x-forwarded-for'] ||
+           req.connection.remoteAddress ||
+           req.socket.remoteAddress ||
+           req.connection.socket.remoteAddress;
+
+  if (ip.split(',').length > 1) {
+    ip = ip.split(',').first();
+  }
+
+  User.findOne({ facebookId: profile.facebookId }, function(err, user) {
+    if (err) {
+      res.status(500).json({error : err});
+    }
+
+    // if the user is found, then log them in
+    if (user) {
+      console.log('user exists in our db and is facebook auth\'d');
+      res.status(200).json(projectUser(user)); // user found, return that user
+    } else {
+      console.log('user is facebook authd but not in our db. Creating now.');
+      // if there is no user found with that facebook id, create them
+      var newUser = new User();
+      // set all of the facebook information in our user model
+      _.extend(newUser, profile);
+
+      // save our user to the database
+      User.Create(newUser, ip, function(err, _user) {
+        if (err) {
+          res.status(500).json(err);
+        } else {
+          console.log(_user);
+          res.status(200).json(projectUser(_user)); // if successful, return the new user
+        }
+      });
+    }
+  });
+}
+
 module.exports = function (router) {
   router.route('/users')
     .post(registerUser);
@@ -175,6 +217,9 @@ module.exports = function (router) {
 
   router.route('/users/:username')
     .get(getUser);
+
+  router.route('/fbFindOrCreate')
+    .post(fbFindOrCreate)
 
   router.route('/api/users/:username')
     .get(getUser);

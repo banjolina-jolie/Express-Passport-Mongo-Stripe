@@ -27,7 +27,7 @@ function populateVisibleUser(_user, res, done) {
   let user = _user;
   async.waterfall([
     function (callback) {
-      res.cookie("currentUser", user.state);
+      res.cookie("currentUser", user.first_name);
       res.status(200).json(projectCurrentUser(user));
       callback();
     }],
@@ -226,7 +226,7 @@ function sendSupportEmail(req, res) {
       logger.warn("Unable to send support email. " + err + " \n user : " + user.email);
     }
     res.send({});
-  });  
+  });
 }
 
 
@@ -250,22 +250,23 @@ API.init = function () {
     process.nextTick(function() {
       // find the user in the database based on their facebook id
       User.findOne({ 'facebookId' : profile.id }, function(err, user) {
- 
+
         // if there is an error, stop everything and return that
         // ie an error connecting to the database
         if (err)
           return done(err);
-          
+
           // if the user is found, then log them in
           if (user) {
-            console.log('returning USER')
+            console.log('user exists in our db and is facebook auth\'d');
             return done(null, user); // user found, return that user
           } else {
+            console.log('user is facebook authd but not in our db. Creating now.');
             // if there is no user found with that facebook id, create them
             var newUser = new User();
             // set all of the facebook information in our user model
-            newUser.facebookId    = profile.id; // set the users facebook id                 
-            newUser.facebookAccessToken = accessToken; // we will save the token that facebook provides to the user                    
+            newUser.facebookId    = profile.id; // set the users facebook id
+            newUser.facebookAccessToken = accessToken; // we will save the token that facebook provides to the user
             newUser.first_name  = profile._json.first_name;
             newUser.last_name = profile._json.last_name; // look at the passport user profile to see how names are returned
             newUser.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first
@@ -280,7 +281,7 @@ API.init = function () {
               // if successful, return the new user
               return done(null, _user);
             });
-         } 
+         }
       });
     });
   }));
@@ -300,7 +301,7 @@ API.createRouter = function () {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
     res.setHeader('Access-Control-Allow-Credentials', true);
-    
+
     // For powering Backbone app
     if (req.method === "OPTIONS") {
       res.status(200).send();
@@ -312,19 +313,6 @@ API.createRouter = function () {
   router.route('/login')
     .post(login)
     .get(checkAuthenticated);
-
-
-  router.get('/auth/facebook', 
-    passport.authenticate('facebook', { scope : 'email' })
-  );
-   
-  // handle the callback after facebook has authenticated the user
-  router.get('/auth/facebook/callback',
-    passport.authenticate('facebook', {
-      successRedirect : '/fblogin',
-      failureRedirect : '/login'
-    })
-  );
 
   router.all('/api/*', isUserAuthenticated);
 
