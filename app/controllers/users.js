@@ -9,7 +9,24 @@ let utilities = require("../common/utilities");
 let projectUser = projections.user;
 let projectCurrentUser = projections.currentUser;
 let Seq = require('seq');
+let async = require('async');
 let User = require("../models/user.js");
+
+
+function populateVisibleUser(_user, res) {
+  let user = _user;
+  async.waterfall([
+    function (callback) {
+      res.cookie("currentUser", user.first_name);
+      res.status(200).json(projectCurrentUser(user));
+      callback();
+    }],
+    function (err) {
+      if (err) {
+        return res.status(500).send({error: err});
+      }
+    });
+}
 
 function registerUser(req, res) {
   let ip = req.headers['x-forwarded-for'] ||
@@ -28,12 +45,19 @@ function registerUser(req, res) {
       User.Create(req.body, ip, this);
     })
     .seq(function (result) {
+      var next = this;
       if (result.result) {
         logger.info("Created new user " + result.user.first_name);
         res.cookie("currentUser", result.user.state);
-        res.status(201).json(projectUser(result.user));
-        this();
-      } else{
+        req.logIn(result.user, function (err) {
+          console.log(arguments);
+          if (err) {
+            return next(err);
+          }
+          populateVisibleUser(result.user, res);
+        });
+        // res.status(201).json(projectUser(result.user));
+      } else {
         logger.info("Failed to create a new user " + result.message);
         res.status(422).json(result);
       }

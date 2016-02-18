@@ -125,7 +125,7 @@ function validator(req, res) {
 
     User.verifyEmail(user._id, function (err) {
       if (err) {
-        return res.status(500).json({message: "Unable to verify that token"});
+        return res.status(500).json(err);
       }
       passport.authenticate('local', function (err, _user, info) {
         if (err) {
@@ -274,12 +274,12 @@ API.init = function () {
             newUser.friends = profile._json.friends;
 
             // save our user to the database
-            User.Create(newUser, {}, function(err, _user) {
+            User.Create(newUser, {}, function(err, result) {
               if (err) {
                 throw err;
               }
               // if successful, return the new user
-              return done(null, _user);
+              return done(null, result.user);
             });
          }
       });
@@ -313,6 +313,23 @@ API.createRouter = function () {
   router.route('/login')
     .post(login)
     .get(checkAuthenticated);
+
+  router.get('/auth/facebook',
+    passport.authenticate('facebook', function () {
+      console.log(arguments);
+    })
+  );
+
+  router.route('/auth/facebook/callback')
+    .get(function (req, res) {
+      return passport.authenticate('facebook', {
+        failureRedirect: '/login',
+        successRedirect: 'http://localhost:8080'
+      }, function (err, user) {
+        // res.cookie("currentUser", 0);
+        res.redirect('http://localhost:8080');
+      }).apply(null, arguments);
+    });
 
   router.all('/api/*', isUserAuthenticated);
 

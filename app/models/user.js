@@ -59,7 +59,7 @@ User.prototype.validate = function (_user, done) {
 
   Seq()
     .seq(function () {
-      if (!_user.facebookId && (!_user.email || !_user.name || !_user.password)) {
+      if (!_user.facebookId && (!_user.first_name || !_user.last_name || !_user.email || !_user.password)) {
         let result  = {
           result: false,
           message: "New users need at least a name, email, and a password"
@@ -272,35 +272,10 @@ User.Create = function (_user, ip, done) {
       user.friends = _user.friends;
       self.collection_.insert(user, this);
     })
-    // .seq(function () {
-    //   // let emailManager = new EmailSender();
-    //   // let that = this;
-    //   // emailManager.sendValidationEmail(user, function (err) {
-    //   //   if (err) {
-    //   //     logger.warn("Unable to send validation emails " + err + " \n user: " + user.email);
-    //   //     return that();
-    //   //   }
-    //     var query = { email: user.email };
-    //     var update = {
-    //       $set: {
-    //         state: constants.userStates.AWAITS_EMAIL_VERIFICATION
-    //       }
-    //     };
-    //     self.collection_.update(query, update, function (err) {
-    //       this(err);
-    //     });
-    //   // });
-    // })
     .seq(function () {
       self.collection_.findOne({email: user.email}, this);
     })
-    .seq(function (_user) {
-      Transactor.create(_user, ip, this);
-    })
-    .seq(function (err) {
-      if (err) {
-        console.log(err);
-      }
+    .seq(function (user) {
       logger.info(util.format("created user %s, request ip %s", JSON.stringify(user), ip));
       done(null, {result:true, user: user});
     })
