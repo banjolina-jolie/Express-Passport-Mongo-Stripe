@@ -50,7 +50,6 @@ function registerUser(req, res) {
         logger.info("Created new user " + result.user.first_name);
         res.cookie("currentUser", result.user.state);
         req.logIn(result.user, function (err) {
-          console.log(arguments);
           if (err) {
             return next(err);
           }
@@ -207,10 +206,8 @@ function fbFindOrCreate(req, res) {
 
     // if the user is found, then log them in
     if (user) {
-      console.log('user exists in our db and is facebook auth\'d');
       res.status(200).json(projectUser(user)); // user found, return that user
     } else {
-      console.log('user is facebook authd but not in our db. Creating now.');
       // if there is no user found with that facebook id, create them
       var newUser = new User();
       // set all of the facebook information in our user model
@@ -221,7 +218,6 @@ function fbFindOrCreate(req, res) {
         if (err) {
           res.status(500).json(err);
         } else {
-          console.log(_user);
           res.status(200).json(projectUser(_user)); // if successful, return the new user
         }
       });

@@ -69,14 +69,14 @@ User.prototype.validate = function (_user, done) {
       this();
     })
     .seq(function () {
-      let query  = {$or: [{email: _user.email}, {id: _user.id}]};
+      let query  = {$or: [{email: _user.email}]};
       self.collection_.findOne(query, this);
     })
     .seq(function (previous) {
       if (previous) {
         let result  = {
           result: false,
-          message: "We already have a user with this same email or username"
+          message: "We already have a user with this same email"
         };
         return done(null, result);
       }

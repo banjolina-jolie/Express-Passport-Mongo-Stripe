@@ -258,10 +258,8 @@ API.init = function () {
 
           // if the user is found, then log them in
           if (user) {
-            console.log('user exists in our db and is facebook auth\'d');
             return done(null, user); // user found, return that user
           } else {
-            console.log('user is facebook authd but not in our db. Creating now.');
             // if there is no user found with that facebook id, create them
             var newUser = new User();
             // set all of the facebook information in our user model
@@ -315,31 +313,21 @@ API.createRouter = function () {
     .get(checkAuthenticated);
 
   router.get('/auth/facebook',
-    passport.authenticate('facebook', function () {
-      console.log(arguments);
-    })
+    passport.authenticate('facebook', { scope : ['email', 'user_friends'] })
   );
 
-  router.route('/auth/facebook/callback')
-    .get(function (req, res) {
-      return passport.authenticate('facebook', {
-        failureRedirect: '/login',
-        successRedirect: 'http://localhost:8080'
-      }, function (err, user) {
-        // res.cookie("currentUser", 0);
-        res.redirect('http://localhost:8080');
-      }).apply(null, arguments);
-    });
+  router.get('/auth/facebook/callback',
+    passport.authenticate('facebook', {
+        successRedirect : 'http://localhost:8080',
+        failureRedirect : '/login'
+    })
+  );
 
   router.all('/api/*', isUserAuthenticated);
 
   require('./controllers/users')(router);
   require('./controllers/transactors')(router);
 
-  router.route('/fblogin')
-    .get(function (req, res) {
-      res.send(req.user);
-    });
 
   router.route('/validator')
     .post(validator);
