@@ -8,7 +8,6 @@ let bodyParser = require('body-parser');
 let cookieParser = require('cookie-parser');
 let passport = require('passport');
 let methodOverride = require('method-override');
-
 let logger = require('./common/logger').forFile('app.js');
 
 module.exports = function setupApp(theSession) {
@@ -20,7 +19,6 @@ module.exports = function setupApp(theSession) {
     extended: true,
     limit: '50mb'
   }));
-
   app.use(bodyParser.json({limit: '20mb'}));
   app.use(methodOverride());
   app.use(cookieParser(config.SESSION_SECRET));
@@ -32,7 +30,6 @@ module.exports = function setupApp(theSession) {
     if (err) {
       logger.error(err.stack ? err.stack : new Error('error').stack);
     }
-
     next(err);
   });
 

@@ -225,8 +225,9 @@ Model.updateAll = function (id, payload, done) {
     })
     .seq(function () {
       var result = Model.translateObjectId(id);
-      if (!result.success)
+      if (!result.success) {
         return done(new Error("Could not translate id into ObjectId, check arguments supplied"));
+      }
       query = {
         _id : result.id
       };
@@ -239,8 +240,9 @@ Model.updateAll = function (id, payload, done) {
       self.collection_.findOne(query, this);
     })
     .seq(function (updated) {
-      if (!updated)
+      if (!updated) {
         return this(new Error("updated should NOT be null " + JSON.stringify(query)));
+      }
       done(null, updated);
     })
     .catch(function (err) {
@@ -263,13 +265,10 @@ Model.delete = function (id, done) {
     })
     .seq(function () {
       var result = Model.translateObjectId(id);
-      if (!result.success)
+      if (!result.success) {
         return done(new Error("Could not translate id into ObjectId, check arguments supplied"));
-      let query = {
-        _id : result.id
-      };
-
-      self.collection_.remove(query, this);
+      }
+      self.collection_.remove({ _id: result.id }, this);
     })
     .seq(function () {
       done();
@@ -452,25 +451,25 @@ Model.translateObjectId = function (id) {
   }
 };
 
-/* Testing paraphernalia */
-Model.removeTable = function (table, done) {
-  let instance = new Model(table);
-  instance.on('ready', () => {
-    instance.db_.dropCollection(table, (err) =>{
-      done(err);
-    });
-  });
-};
+// /* Testing paraphernalia */
+// Model.removeTable = function (table, done) {
+//   let instance = new Model(table);
+//   instance.on('ready', () => {
+//     instance.db_.dropCollection(table, (err) =>{
+//       done(err);
+//     });
+//   });
+// };
 
-Model.purge = function (done) {
-  let tables = ['users', 'transactors'];
-  async.each(tables, Model.removeTable, (err) => {
-    if (err) {
-      return done(err);
-    }
-    done();
-  });
-};
+// Model.purge = function (done) {
+//   let tables = ['users', 'transactors'];
+//   async.each(tables, Model.removeTable, (err) => {
+//     if (err) {
+//       return done(err);
+//     }
+//     done();
+//   });
+// };
 
 Model.populate = function (fixtures, done) {
   Object.each(fixtures, (table, tableFixtures) => {
@@ -485,15 +484,15 @@ Model.populate = function (fixtures, done) {
   done();
 };
 
-Model.scaffold = function (fixtures, done) {
-  async.waterfall([
-    (cb) => {
-      Model.purge(cb);
-    },
-    (cb) => {
-      Model.populate(fixtures, cb);
-    }],
-    (err) => {
-      done(err);
-    });
-};
+// Model.scaffold = function (fixtures, done) {
+//   async.waterfall([
+//     (cb) => {
+//       Model.purge(cb);
+//     },
+//     (cb) => {
+//       Model.populate(fixtures, cb);
+//     }],
+//     (err) => {
+//       done(err);
+//     });
+// };

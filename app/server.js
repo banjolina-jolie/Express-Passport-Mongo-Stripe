@@ -12,7 +12,6 @@ let setupApp = require('./app');
 loggerEntry.initServer();
 logger.info("Fire up the big guns on port " + process.env.PORT);
 
-
 function errorHandler(err, req, res, next) {
   logger.warn("error handler " + err);
   if (req.xhr) {

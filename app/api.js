@@ -10,24 +10,21 @@ let express = require('express');
 let logger = require('./common/logger.js').forFile('api.js');
 let passport = require('passport');
 let EmailSender = require('./common/email-engine');
-
 let projectCurrentUser = require("./common/projections.js").currentUser;
 let constants = require("./common/constants");
-
 let LocalStrategy = require('passport-local').Strategy;
 let FacebookStrategy = require('passport-facebook').Strategy;
 let User = require('./models/user');
 
 let API = module.exports;
 
-// User cache **BEWARE**
 let userCache = {};
 
 function populateVisibleUser(_user, res, done) {
   let user = _user;
   async.waterfall([
     function (callback) {
-      res.cookie("currentUser", user.first_name);
+      res.cookie("currentUser", user.id);
       res.status(200).json(projectCurrentUser(user));
       callback();
     }],
@@ -236,11 +233,13 @@ function sendSupportEmail(req, res) {
 
 
 API.init = function () {
+  // Local
   var opts = { usernameField: 'email', passwordField: 'password' };
   passport.use(new LocalStrategy(opts, authenticate));
   passport.serializeUser(serializeUser);
   passport.deserializeUser(deserializeUser);
 
+  // Facebook
   passport.use(new FacebookStrategy({
     clientID: config.FB_APP_ID,
     clientSecret: config.FB_APP_SECRET,
@@ -293,8 +292,7 @@ API.createRouter = function () {
   var router = express.Router();
 
   router.use(function (req, res, next) {
-    /*TODO: probably allowing access for everyone isn't best idea, so allowed origins should be filtered someway
-      e.g. could be created file named "config.json" where allowed origins could be white-listed*/
+    // TODO: be more strict about allowed origins
     res.header('Access-Control-Allow-Origin', req.headers.origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
@@ -319,7 +317,7 @@ API.createRouter = function () {
   router.get('/auth/facebook/callback',
     passport.authenticate('facebook', {
         successRedirect : 'http://localhost:8080',
-        failureRedirect : '/login'
+        failureRedirect : 'http://localhost:8080'
     })
   );
 

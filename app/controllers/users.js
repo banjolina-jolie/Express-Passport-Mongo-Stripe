@@ -2,11 +2,10 @@
 
 let _ = require('lodash');
 let logger = require('../common/logger.js').forFile('controllers/users.js');
-let constants = require('../common/constants');
 let projections = require("../common/projections.js");
-let utilities = require("../common/utilities");
 let projectUser = projections.user;
 let projectCurrentUser = projections.currentUser;
+let utilities = require("../common/utilities");
 let Seq = require('seq');
 let async = require('async');
 let User = require("../models/user.js");
@@ -28,10 +27,7 @@ function populateVisibleUser(_user, res) {
 }
 
 function registerUser(req, res) {
-  let ip = req.headers['x-forwarded-for'] ||
-           req.connection.remoteAddress ||
-           req.socket.remoteAddress ||
-           req.connection.socket.remoteAddress;
+  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
 
   if (ip.split(',').length > 1) {
     ip = ip.split(',').first();
@@ -91,8 +87,9 @@ function updateUser(req, res) {
       User.findById(req.params.user_id, this);
     })
     .seq(function (_user) {
-      if (!_user)
+      if (!_user) {
         return res.status(500).json({error : "Can't find user " + req.params.user_id});
+      }
       User.update(req.params.user_id, req.body, this);
     })
     .seq(function (_updatedUser) {

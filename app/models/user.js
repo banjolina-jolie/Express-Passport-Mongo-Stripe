@@ -7,7 +7,6 @@ let logger = require('../common/logger.js').forFile('models/user.js');
 let util = require('util');
 
 let constants = require('../common/constants');
-let EmailSender = require('../common/email-engine');
 let Model = require('./model');
 let Seq = require('seq');
 let Storage = require('../common/storage');
@@ -61,8 +60,7 @@ User.prototype.validate = function (_user, done) {
       this();
     })
     .seq(function () {
-      let query  = {$or: [{email: _user.email}]};
-      self.collection_.findOne(query, this);
+      self.collection_.findOne({ email: _user.email }, this);
     })
     .seq(function (previous) {
       if (previous) {
@@ -93,7 +91,7 @@ User.findOne = Model.findOne.bind(User); // params, done);
 
 User.findByToken = Model.findByAttribute.bind(User, "validation.token"); // $token, done);
 User.verifyEmail = Model.updateSet.bind(User, 'state', constants.userStates.NEEDSREVIEW); // _id, done);
-User.changeState = Model.updateSet.bind(User, 'state'); //state, done);
+User.changeState = Model.updateSet.bind(User, 'state'); // state, done);
 
 
 User.delete = function (userId, done) {
@@ -245,7 +243,9 @@ User.Create = function (_user, ip, done) {
       if (!validation.result) {
         return done(null, validation);
       }
-      // User.hashPassword(_user.password, this);
+      if (_user.password) {
+        User.hashPassword(_user.password, this);
+      }
       user.created = Date.now();
       user.first_name = _user.first_name;
       user.last_name = _user.last_name;

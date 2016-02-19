@@ -16,8 +16,6 @@ stripe.setApiVersion('2015-06-15');
 let StripeManager = module.exports = {};
 
 StripeManager.createAccount = function (_account, userType, done) {
-
-  console.log("createAccount " + JSON.stringify(_account));
   async.waterfall([
     function (callback) {
       if (userType === 0) { // PAYEE
@@ -45,7 +43,6 @@ StripeManager.addCardToPayer = function (stripeId, cardInfo, done) {
     done(null, _response);
   });
 };
-
 
 StripeManager.addBankAccount = function (transactor, bankInfo, done) {
   let input = {
@@ -208,7 +205,6 @@ StripeManager.getAccounts = function (done) {
       stripe.accounts.list({limit : 30}, callback);
     },
     function (accounts, callback) {
-      console.log("accounts count " + accounts.data.length);
       callback();
     }],
     function (err) {

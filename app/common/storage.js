@@ -20,7 +20,6 @@ Storage.prototype.init = function (name) {
   var self = this;
 
   self.name_ = name;
-  console.log("new Storage instance : " + self.name_);
 
   Seq()
     .seq(function () {
@@ -37,7 +36,6 @@ Storage.prototype.init = function (name) {
     })
     .catch(function (err) {
       self.emit("error", err);
-      console.log("Storage init err " + err);
     });
 };
 
@@ -49,7 +47,6 @@ Storage.prototype.uploadStaticAsset = function (key, assetPath, done) {
     Body: fs.createReadStream(assetPath)
   };
 
-  console.log("uploading new static asset to S3 " + key);
   self.s3_.upload(params)
   .on('httpUploadProgress', (evt) => { console.log(evt); })
   .send((err, data) => {
