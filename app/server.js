@@ -29,13 +29,12 @@ function configureApp(app) {
 }
 
 function setupExceptionHandlers() {
-  var term_events = ['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL',
-                     'SIGABRT', 'SIGFPE', 'SIGSEGV', 'SIGPIPE', 'SIGTERM',
-                     'SIGUSR1', 'SIGUSR2', 'SIGBUS', 'SIGIO'];
+  var term_events = ['exit', 'SIGHUP', 'SIGINT', 'SIGQUIT', 'SIGILL', 'SIGABRT', 'SIGFPE', 'SIGSEGV', 'SIGPIPE', 'SIGTERM', 'SIGUSR1', 'SIGUSR2', 'SIGBUS', 'SIGIO'];
 
   function gracefullExit() {
     process.exit(1);
   }
+
   for (var i in term_events) {
     process.on(term_events[i], gracefullExit);
   }
@@ -50,12 +49,13 @@ function setupExceptionHandlers() {
   let app;
   let proxy;
   let store = new MongoStore({ url: config.MONGODB_URL, autoReconnect: true });
-  let theSession = session({ secret: config.SESSION_SECRET,
-                             store: store,
-                             cookie: { maxAge: 86400000 },
-                             saveUninitialized: true,
-                             resave: true
-                           });
+  let theSession = session({
+    secret: config.SESSION_SECRET,
+    store: store,
+    cookie: { maxAge: 86400000 },
+    saveUninitialized: true,
+    resave: true
+  });
 
   app = setupApp(theSession);
   configureApp(app);

@@ -17,8 +17,8 @@ Constants.userStates = {
 };
 
 Constants.userTypes = {
-	LISTENER : 0,
-	PRESENTER : 1,
+	PAYEE : 0,
+	PAYER : 1,
   SUPER : 2
 };
 
@@ -36,8 +36,8 @@ Constants.userRating = {
 TRANSACTOR
 **/
 Constants.transactorTypes = {
-  RECEIVER : 0, // => User.Listener => Stripe managed account
-  CUSTOMER : 1 // => User.Presenter => Stripe customer
+  RECEIVER : 0, // => Payee => Stripe managed account
+  CUSTOMER : 1 // => Payer => Stripe customer
 };
 
 Constants.transactorPaymentMethods = {
@@ -47,7 +47,7 @@ Constants.transactorPaymentMethods = {
 };
 
 Constants.transactorStates = {
-  NEEDS_DETAILS : 0, // => aft
+  NEEDS_DETAILS : 0,
   SATISFIED : 1,
   ORPHANED : 2
 };

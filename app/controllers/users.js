@@ -3,7 +3,6 @@
 let _ = require('lodash');
 let logger = require('../common/logger.js').forFile('controllers/users.js');
 let constants = require('../common/constants');
-let ObjectId = require('mongodb').ObjectID;
 let projections = require("../common/projections.js");
 let utilities = require("../common/utilities");
 let projectUser = projections.user;
@@ -55,7 +54,6 @@ function registerUser(req, res) {
           }
           populateVisibleUser(result.user, res);
         });
-        // res.status(201).json(projectUser(result.user));
       } else {
         logger.info("Failed to create a new user " + result.message);
         res.status(422).json(result);
@@ -76,15 +74,15 @@ function getUser(req, res) {
       User.findOne({username: req.params.username}, this);
     })
     .seq(function (_user) {
-      if (!_user)
+      if (!_user) {
         return res.status(404).send();
+      }
       user = _user;
       res.status(200).json(projectUser(user));
     })
     .catch(function (err) {
       res.status(500).send({error : "get User err " + err});
-    })
-    ;
+    });
 }
 
 function updateUser(req, res) {
@@ -98,10 +96,11 @@ function updateUser(req, res) {
       User.update(req.params.user_id, req.body, this);
     })
     .seq(function (_updatedUser) {
-      if (_updatedUser.success)
+      if (_updatedUser.success) {
   		  res.status(200).json(projectCurrentUser(_updatedUser.updated));
-      else
+      } else {
         res.status(422).json(_updatedUser);
+      }
   	})
   	.catch(function (err) {
   		res.status(500).json({error : err});
@@ -120,38 +119,19 @@ function deleteUser(req, res) {
   });
 }
 
-// This method is used from both the front page and the admin panel
-// Search on the site -> {q : $NAME} -> does a regex search across name, last_name and username
+// Search on the site -> {q : $NAME} -> does a regex search across first_name and last_name
 // Search on the admin panel -> {key : value.....}, exact find using key value pairs
 function searchUsers(req, res) {
   let query = {};
   if (req.query.q) {
     // Used by search at front end
-    // Regex match across name, last_name and username for now
+    // Regex match across first_name and last_name
     let matcher =  "^" + req.query.q;
-    query = { $or : [{name : {$regex : matcher, $options : "si"}},
-                     {last_name : {$regex : matcher, $options : "si"}},
-                     {username : {$regex : matcher, $options : "si"}}]};
-    // for type 1 users, only return type 0 users.  And vis-versa.
-    // type 2 users (super users) will see search results for types 0 AND 1.
-    if (req.user.type === 0 || req.user.type === 1) {
-      var searchUserType = req.user.type === 1 ? 0 : 1;
-      query = { $and : [{ type: searchUserType}, query ]};
-    }
-  }
-  else if (req.query.listener) {
-    req.query.listener = req.query.listener.map(function (id) {
-      return new ObjectId.createFromHexString(id);
-    });
-    query = { _id: { $in: req.query.listener }};
-  }
-  else if (req.query.presenter) {
-    req.query.presenter = req.query.presenter.map(function (id) {
-      return new ObjectId.createFromHexString(id);
-    });
-    query = { _id: { $in: req.query.presenter }};
-  }
-  else{
+    query = { $or : [
+      {first_name : {$regex : matcher, $options : "si"}},
+      {last_name : {$regex : matcher, $options : "si"}}
+    ]};
+  } else {
     Object.each(req.query, function (key, value) {
       let potentialInt = utilities.safeParseInt(value);
       query[key] = potentialInt !== null ? potentialInt : value;
@@ -161,14 +141,13 @@ function searchUsers(req, res) {
   User.find(query, function (err, users) {
     if (err) {
       res.status(500).json({message: err});
-    }
-    else {
+    } else {
       res.status(200).json(users.map(projectUser));
     }
   });
 }
 
-/* Simple key value pair lookup (for listener's search)*/
+/* Simple key value pair lookup */
 function getUsers (req, res) {
   var query = req.query;
 
@@ -180,8 +159,7 @@ function getUsers (req, res) {
   User.find(query, function (err, users) {
     if (err) {
       res.status(500).send();
-    }
-    else {
+    } else {
       res.status(200).json(users.map(projectUser));
     }
   });
@@ -190,10 +168,7 @@ function getUsers (req, res) {
 function fbFindOrCreate(req, res) {
   let profile = req.body;
 
-  let ip = req.headers['x-forwarded-for'] ||
-           req.connection.remoteAddress ||
-           req.socket.remoteAddress ||
-           req.connection.socket.remoteAddress;
+  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress;
 
   if (ip.split(',').length > 1) {
     ip = ip.split(',').first();
@@ -204,16 +179,15 @@ function fbFindOrCreate(req, res) {
       res.status(500).json({error : err});
     }
 
-    // if the user is found, then log them in
     if (user) {
+      // if the user is found, return it
       res.status(200).json(projectUser(user)); // user found, return that user
     } else {
-      // if there is no user found with that facebook id, create them
+      // if there is no user found with that facebook id, create it
       var newUser = new User();
       // set all of the facebook information in our user model
       _.extend(newUser, profile);
-
-      // save our user to the database
+      // save user to the database
       User.Create(newUser, ip, function(err, _user) {
         if (err) {
           res.status(500).json(err);
@@ -248,4 +222,3 @@ module.exports = function (router) {
     .put(updateUser)
     .delete(deleteUser);
 };
-

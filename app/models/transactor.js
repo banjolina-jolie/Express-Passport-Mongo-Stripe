@@ -118,8 +118,7 @@ Transactor.populate = function (transactor, stripeInfo) {
     stripeInfo.external_accounts.data.each((pm) => {
       if (pm.object === "bank_account") {
         transactor.visible.paymentMethods.push(projectBankAccount(pm));
-      }
-      else{ // it has to be a card of some type
+      } else { // it has to be a card of some type
        transactor.visible.paymentMethods.push(projectCard(pm));
       }
     });
@@ -129,8 +128,7 @@ Transactor.populate = function (transactor, stripeInfo) {
       transfersEnabled : stripeInfo.transers_enabled,
       required : stripeInfo.verification
     };
-  }
-  else {
+  } else {
     if (stripeInfo.sources.total_count === 0) {
       return transactor;
     }
@@ -167,9 +165,8 @@ Transactor.addPaymentMethod = function (user, transactor, payload, done) {
     //console.log("newCard looks like " + JSON.stringify(newCard));
     //console.log("card incoming looks like " + JSON.stringify(payload.details));
     // Have to assume that it is a user.
-    stripeManager.addCardToPresenter(transactor.ss.stripeId, newCard, done);
-  }
-  else if (incomingType === paymentMethods.BANK_ACCOUNT || incomingType === paymentMethods.PAYPAL) {
+    stripeManager.addCardToPayer(transactor.ss.stripeId, newCard, done);
+  } else if (incomingType === paymentMethods.BANK_ACCOUNT || incomingType === paymentMethods.PAYPAL) {
     // have to assume that it is a listener
     //console.log("BA incoming looks like " + JSON.stringify(payload.details));
     stripeManager.addBankAccount(transactor, payload.details, function (err, _response) {
@@ -188,7 +185,7 @@ Transactor.updatePaymentDetails = function (user, payload, done) {
 
   async.waterfall([
     function (callback) {
-      Transactor.findByUserAndType({userId: user._id.toString(), type: user.type}, callback);
+      Transactor.findByUser({ userId: user._id.toString() }, callback);
     },
     function (_transactor, callback) {
       transactor = _transactor;
@@ -327,7 +324,7 @@ Transactor.createAppropriateStripeAccount = function (_user) {
   };
 };
 
-Transactor.findByUserAndType = function (params, done) {
+Transactor.findByUser = function (params, done) {
   async.waterfall([
     function (callback) {
       Transactor.find(params, callback);
@@ -355,8 +352,7 @@ Transactor.deleteByUser = function (userid, done) {
       if (transactor.type === transactorTypes.RECEIVER) {
         logger.warn("unable to delete the managed account yet, transactorId " + transactor._id.toString());
         callback();
-      }
-      else{
+      } else {
         stripeManager.deleteCustomer(transactor, callback);
       }
     },
@@ -411,24 +407,24 @@ Transactor.getTransactionsByUser = function (userId, done) {
   ], done);
 };
 
-Transactor.markPaymentAsFailed = function (userId, meetingId, error, done) {
+Transactor.markPaymentAsFailed = function (userId, eventId, error, done) {
   Transactor.updatePush(userId.toString(), 'logs', {
     timestamp : Date.now(),
-    message : 'Failed to charge presenter for ' + meetingId + ' because of ' +
+    message : 'Failed to charge presenter for ' + eventId + ' because of ' +
       (error.message ? error.message : error)
   }, done);
 };
 
-Transactor.markPaymentAsSent = function (userId, meetingId, done) {
+Transactor.markPaymentAsSent = function (userId, eventId, done) {
   Transactor.updatePush(userId.toString(), 'logs', {
     timestamp : Date.now(),
-    message : 'Presenter charged for ' + meetingId
+    message : 'Presenter charged for ' + eventId
   }, done);
 };
 
-Transactor.markPaymentAsReceived = function (userId, meetingId, done) {
+Transactor.markPaymentAsReceived = function (userId, eventId, done) {
   Transactor.updatePush(userId.toString(), 'logs', {
     timestamp : Date.now(),
-    message : 'Listener received money for ' + meetingId
+    message : 'Listener received money for ' + eventId
   }, done);
 };

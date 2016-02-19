@@ -39,8 +39,7 @@ Database.connect = function (callback) {
 
   if (DATABASE) {
     callback(null, DATABASE);
-  }
-  else {
+  } else {
 
     CONNECTING = true;
     WAITING = [];
@@ -98,6 +97,5 @@ Database.connect = function (callback) {
     })
     .catch(function (err) {
       callback(err);
-    })
-    ;
+    });
  };

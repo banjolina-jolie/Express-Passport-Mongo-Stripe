@@ -67,8 +67,10 @@ Model.prototype.baseFind = function (attr, value, done) {
 };
 
 /*
-var result  = {result : false,
-               message : ""};
+  var result  = {
+    result : false,
+    message : ""
+  };
 */
 Model.prototype.validate = function (entity, done) {
   console.log("No validation method implemented");
@@ -109,7 +111,6 @@ Model.baseFinder = function (attr, value, done) {
 Model.capitalize = function (input) {
   return input.charAt(0).toUpperCase() + input.slice(1);
 };
-
 
 Model.findById = function (searchId, done) {
   let child = this;
@@ -153,7 +154,6 @@ Model.create = function (entry, done) {
       self.on("ready", this);
     })
     .seq(function () {
-      console.log("validate this " + JSON.stringify(entry));
       self.validate(entry, this);
     })
     .seq(function (validation) {
@@ -309,8 +309,9 @@ Model.updateSet = function (key, value, id, done) {
   let self;
 
   var result = Model.translateObjectId(id);
-  if (!result.success)
+  if (!result.success) {
     return done(new Error("Could not translate id into ObjectId, check arguments supplied"));
+  }
 
   let query = {_id : result.id};
 
@@ -400,8 +401,9 @@ Model.updatePull = function (id, key, valueQuery, done) {
       };
 
       var result = Model.translateObjectId(id);
-      if (!result.success)
+      if (!result.success) {
         return done(new Error("Could not translate id into ObjectId, check arguments supplied"));
+      }
 
       query = {
         _id : result.id
@@ -430,11 +432,7 @@ Model.findAndModify = function (query, update, done) {
       self.on("ready", this);
     })
     .seq(function () {
-      self.collection_.findAndModify(query,
-                                     [['_id','asc']],
-                                     update,
-                                     {},
-                                     this);
+      self.collection_.findAndModify(query, [['_id','asc']], update, {}, this);
     })
     .seq(function () {
       self.collection_.findOne(query, done);
@@ -445,7 +443,7 @@ Model.findAndModify = function (query, update, done) {
 };
 
 Model.translateObjectId = function (id) {
-  try{
+  try {
     let objectId = new ObjectId.createFromHexString(id.toString());
     return {success : true, id: objectId };
   }
@@ -465,10 +463,11 @@ Model.removeTable = function (table, done) {
 };
 
 Model.purge = function (done) {
-  let tables = ['users', 'schedules', 'meetings', 'transactors'];
+  let tables = ['users', 'transactors'];
   async.each(tables, Model.removeTable, (err) => {
-    if (err)
+    if (err) {
       return done(err);
+    }
     done();
   });
 };

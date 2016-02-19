@@ -38,22 +38,23 @@ Storage.prototype.init = function (name) {
     .catch(function (err) {
       self.emit("error", err);
       console.log("Storage init err " + err);
-    })
-    ;
+    });
 };
 
 Storage.prototype.uploadStaticAsset = function (key, assetPath, done) {
   let self = this;
-  let params = {Bucket : self.name_,
-                Key : key,
-                Body: fs.createReadStream(assetPath)};
+  let params = {
+    Bucket : self.name_,
+    Key : key,
+    Body: fs.createReadStream(assetPath)
+  };
 
   console.log("uploading new static asset to S3 " + key);
   self.s3_.upload(params)
-          .on('httpUploadProgress', (evt) => { console.log(evt); })
-          .send((err, data) => {
-             done(err, data);
-          });
+  .on('httpUploadProgress', (evt) => { console.log(evt); })
+  .send((err, data) => {
+    done(err, data);
+  });
 };
 
 Storage.prototype.deleteObject = function (key, done) {
@@ -67,23 +68,22 @@ Storage.prototype.deleteObject = function (key, done) {
   });
 };
 
-// TODO
-// remove public flag post dev
 Storage.prototype.put = function (key, payload, done) {
   let self = this;
   let buf = new Buffer(payload.replace(/^data:image\/\w+;base64,/, ""),'base64');
-  let data = {Key: key,
-              Body: buf,
-              ContentEncoding: 'base64',
-              Bucket: self.name_,
-              ContentType: 'image/jpeg',
-              ACL:'public-read'};
+  let data = {
+    Key: key,
+    Body: buf,
+    ContentEncoding: 'base64',
+    Bucket: self.name_,
+    ContentType: 'image/jpeg',
+    ACL:'public-read'
+  };
   self.s3_.putObject(data, function (err, data) {
     if (err) {
       console.log(util.format('%s : %s, err : %s' , 'Error uploading data: ', data, err));
       done(err);
-    }
-    else{
+    } else {
       done();
     }
   });

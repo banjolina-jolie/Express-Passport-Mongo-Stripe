@@ -3,7 +3,7 @@
 let config = exports;
 let env = process.env;
 
-config.SESSION_SECRET = "SweetSucculentAndFine!";
+config.SESSION_SECRET = "CakeAndTeaAndTeaAndCake!";
 
 if (env.NODE_ENV !== "production") {
 	// Automatically load .env file that should be found at the root of the project dir.

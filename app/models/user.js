@@ -46,14 +46,6 @@ let User = module.exports;
 
 util.inherits(User, Model);
 
-User.prototype.ratings = function () {
-  let self = this;
-  let figures = self.ratings.map(function (rating) {
-    return rating.rating;
-  });
-  return figures.average();
-};
-
 User.prototype.validate = function (_user, done) {
   let self = this;
 
@@ -121,11 +113,6 @@ User.delete = function (userId, done) {
       Transactor.deleteByUser(userId, callback);
     },
     function (callback) {
-      // TODO:
-      //Meeting.cancelAllByUser(user, "User was deleted", callback);
-      callback();
-    },
-    function (callback) {
       Model.delete.call(User, userId, callback);
     }],
     function (err) {
@@ -139,9 +126,9 @@ User.update = function (id, update, done) {
     .seq(function () {
       if (!!update.meta.picture) {
         User.saveProfileImage(id, update.meta.picture, this);
-      }
-      else
+      } else {
         this();
+      }
     })
     .seq(function () {
       update.meta = Object.reject(update.meta, "picture");
@@ -155,8 +142,9 @@ User.update = function (id, update, done) {
       if (!update.newPassword)
         return this();
       User.changePassword(id, update, function (err, result) {
-        if (err)
+        if (err) {
           return this(err);
+        }
         if (!result.success) {
           return done(null, result);
         }
@@ -166,8 +154,6 @@ User.update = function (id, update, done) {
     .seq(function () {
       let rejects = [
         "id",
-        "completions",
-        "showCompletions",
         "password",
         "reEnterPassword",
         "newPassword",
@@ -178,8 +164,6 @@ User.update = function (id, update, done) {
     })
     .seq(function (updated) {
       updated._id = id;
-      updated.schedule = update.schedule;
-      updated.meetings = update.meetings;
       done(null, {success: true, updated: updated});
     })
     .catch(function (err) {

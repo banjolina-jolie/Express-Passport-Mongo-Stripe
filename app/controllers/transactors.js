@@ -29,12 +29,7 @@ Paypal
 **/
 
 function get(req, res) {
-  var params = {
-    userId : req.params.user_id,
-    type : req.user.type
-  };
-
-  Transactor.findByUserAndType(params, function (err, _transactor) {
+  Transactor.findByUser({ userId : req.params.user_id }, function (err, _transactor) {
     if (err || !_transactor) {
       return res.status(500).send();
     }
@@ -45,29 +40,26 @@ function get(req, res) {
 
 // For adding payment methods
 function update(req, res) {
-  console.log("update in controller " + JSON.stringify(req.body) + ' ' + req.params.user_id);
-  let incomingType = parseInt(req.body.updates.type);
-
   async.waterfall([
     (cb) => {
       User.findById(req.params.user_id, cb);
     },
     (_user, cb) => {
-      if (!_user)
+      if (!_user) {
         return cb(new Error("unable to find user with that id"));
-      if (req.body.updates)
+      }
+      if (req.body.updates) {
         return Transactor.updatePaymentDetails(_user, req.body.updates, cb);
+      }
       return cb(new Error("No details to update Stripe with"));
     }],
     (err, result) => {
       if (err) {
-        console.log("err " + err);
-        return res.status(500).json(err.message);
+        return res.status(500).json(err);
       }
       if (!result.validation.success) {
         return res.status(422).json({message : result.validation.message});
       }
-      console.log("response from transactor.update " + JSON.stringify(result));
       return res.status(200).json(projectTransactor(result.transactor));
     });
 }
