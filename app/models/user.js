@@ -122,21 +122,14 @@ User.delete = function (userId, done) {
 User.update = function (id, update, done) {
   Seq()
     .seq(function () {
-      if (!!update.meta.picture) {
-        User.saveProfileImage(id, update.meta.picture, this);
+      if (!!update.picture) {
+        User.saveProfileImage(id, update.picture, this);
       } else {
         this();
       }
     })
     .seq(function () {
-      update.meta = Object.reject(update.meta, "picture");
-      if (!update.schedule) {
-        return this();
-      }
-      update._id = id;
-      Schedule.updateByUser(update, this);
-    })
-    .seq(function () {
+      update = Object.reject(update, "picture");
       if (!update.newPassword)
         return this();
       User.changePassword(id, update, function (err, result) {
@@ -174,7 +167,7 @@ User.saveProfileImage = function (userId, image, done) {
   Seq()
     .seq(function () {
       let that = this;
-      storage = new Storage("appBucket");
+      storage = new Storage("apigeneratorbucket");
       storage.on("error", function (err) {
         that(err);
       });
