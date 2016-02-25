@@ -4,6 +4,7 @@ let async = require('async');
 let bcrypt = require('bcrypt');
 let crypto = require('crypto');
 let logger = require('../common/logger.js').forFile('models/user.js');
+let config = require('../common/config');
 let util = require('util');
 
 let constants = require('../common/constants');
@@ -167,7 +168,7 @@ User.saveProfileImage = function (userId, image, done) {
   Seq()
     .seq(function () {
       let that = this;
-      storage = new Storage("apigeneratorbucket");
+      storage = new Storage(config.S3_PROFILE_IMG_BUCKET_NAME);
       storage.on("error", function (err) {
         that(err);
       });
