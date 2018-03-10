@@ -33,6 +33,6 @@
     "jshint": "^2.8.0"
   },
   "scripts": {
-    "start": "$NODE_HOME/bin/node --harmony app/server.js"
+    "start": "node --harmony app/server.js"
   }
 }
