@@ -5,11 +5,11 @@
 
 ### Setup
 
-You'll want to use Node v4.2 or greater.
+- You'll want to use Node v9.8 or greater.
 
-You'll also want to register your app with Stripe, Sendgrid, AWS, and Facebook to generate the proper keys necessary to populate your `.env` file
+- You'll also want to register your app with Stripe, Sendgrid, AWS, and Facebook to generate the proper keys necessary to populate your `.env` file
 
-create a `.env` file at the root level with the following keys:
+- create a `.env` file at the root level with the following keys:
 
 ```
 MONGODB_URL=mongodb://127.0.0.1/sampleApp
@@ -33,5 +33,5 @@ FB_APP_SECRET=<FILL IN YOURSELF>
 
 
 - npm install
-- mongod (in another terminal tab)
+- mongod (start mongo instance in another terminal tab)
 - node app/server.js
